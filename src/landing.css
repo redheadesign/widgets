@@ -81,17 +81,15 @@ body:has(.bento-page) { margin: 0; }
 .bento-header :focus-visible { outline: 2px solid #f47c37; outline-offset: 3px; }
 .bento-nav button:active, .bento-link:active { transform: scale(.96); }
 
-.bento-stage { container-type: inline-size; margin-inline: var(--edge); }
+.bento-stage { margin-inline: var(--edge); padding-block: 16px var(--edge); }
 .bento-grid {
-  --bento-unit: min(176px, (100cqw - (var(--bento-columns) - 1) * var(--bento-gap)) / var(--bento-columns));
   display: grid;
   grid-template-columns: repeat(var(--bento-columns), var(--bento-unit));
   grid-auto-rows: var(--bento-unit);
   gap: var(--bento-gap);
   inline-size: fit-content;
-  max-inline-size: 100%;
-  margin: var(--bento-gap) auto 0;
-  padding-block-end: var(--edge);
+  margin-inline: auto;
+  zoom: var(--bento-scale);
 }
 .bento-tile { min-inline-size: 0; min-block-size: 0; }
 

@@ -7,7 +7,7 @@
 [Скачать весь набор](https://github.com/redheadesign/widgets/releases/latest/download/widgets-kit.zip): в ZIP есть React-пакет, 30 HTML-виджетов для Telegram и инструкции. React-пакет содержит готовые JavaScript, стили, типы и медиа. Можно установить его отдельно:
 
 ```sh
-npm install https://github.com/redheadesign/widgets/releases/download/v1.0.2/redheadesign-widgets-1.0.2.tgz
+npm install https://github.com/redheadesign/widgets/releases/download/v1.0.3/redheadesign-widgets-1.0.3.tgz
 ```
 
 Для сборки из исходников GitHub закрепите SHA коммита в зависимости.
@@ -19,7 +19,7 @@ npm install 'github:redheadesign/widgets#<commit-sha>'
 Из локальной копии можно собрать архив. Запустите `npm ci` и `npm pack` в репозитории, затем установите архив из своего приложения. Имя архива включает версию из `package.json`.
 
 ```sh
-npm install /path/to/redheadesign-widgets-1.0.2.tgz
+npm install /path/to/redheadesign-widgets-1.0.3.tgz
 ```
 
 ## Использование в React

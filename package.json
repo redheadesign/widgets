@@ -1,7 +1,7 @@
 {
   "name": "@redheadesign/widgets",
   "private": true,
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Interactive React widgets and standalone HTML widgets for Telegram bots.",
   "repository": "github:redheadesign/widgets",
   "license": "UNLICENSED",
@@ -24,7 +24,9 @@
     "docs/telegram.md",
     "licenses/"
   ],
-  "sideEffects": ["**/*.css"],
+  "sideEffects": [
+    "**/*.css"
+  ],
   "scripts": {
     "dev": "vite --host localhost --port 5173",
     "build": "tsc --noEmit && vite build",

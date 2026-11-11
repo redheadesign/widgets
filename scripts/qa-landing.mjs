@@ -7,6 +7,7 @@ const url = new URL(process.argv[2] ?? 'http://localhost:5173/widgets/');
 const output = new URL('../qa/run/', import.meta.url);
 const widths = [320, 390, 768, 1024, 1440, 1920];
 const seeds = [1, 13, 42, 77, 169, 277, 904, 2026];
+const gridSpec = { columns: 3, module: 176, gap: 16, width: 944 };
 const categories = {
   'Аналитика': ['revenue', 'users', 'funnel', 'traffic', 'goal', 'retention'],
   'Здоровье': ['heart-rate', 'activity', 'steps', 'sleep', 'lung-capacity', 'hydration', 'glucose', 'breathing'],
@@ -30,30 +31,42 @@ try {
   const filter = label => nav.getByRole('button', { name: label, exact: true });
 
   async function measure(expected, viewport) {
-    await page.waitForFunction(count => {
+    await page.waitForFunction(({ count, spec }) => {
       const grid = document.querySelector('.bento-grid');
       if (!grid || grid.children.length !== count) return false;
-      const gap = Number.parseFloat(getComputedStyle(grid).columnGap);
-      const columns = Math.min(5, Math.max(1, Math.floor((grid.parentElement.clientWidth + gap) / (160 + gap))));
-      return Number(grid.style.getPropertyValue('--bento-columns')) === Math.min(count, columns);
-    }, expected.length);
-    const data = await grid.evaluate(element => {
+      const space = grid.parentElement.clientWidth;
+      const columns = Math.min(count, spec.columns, Math.max(1, Math.floor((space + spec.gap) / spec.module)));
+      const nativeWidth = columns * spec.module + (columns - 1) * spec.gap;
+      const desktopWidth = spec.columns * spec.module + (spec.columns - 1) * spec.gap;
+      const scale = Math.min(spec.width / desktopWidth, space / nativeWidth);
+      return Number(grid.style.getPropertyValue('--bento-columns')) === columns &&
+        Math.abs(Number.parseFloat(getComputedStyle(grid).zoom) - scale) < 0.002;
+    }, { count: expected.length, spec: gridSpec });
+    const data = await grid.evaluate((element, spec) => {
       const style = getComputedStyle(element);
-      const cols = style.gridTemplateColumns.split(' ').map(Number.parseFloat);
-      const rows = style.gridTemplateRows.split(' ').map(Number.parseFloat);
-      const gap = Number.parseFloat(style.columnGap);
+      const nativeCols = style.gridTemplateColumns.split(' ').map(Number.parseFloat);
+      const nativeRows = style.gridTemplateRows.split(' ').map(Number.parseFloat);
+      const nativeGap = Number.parseFloat(style.columnGap);
+      const scale = Number.parseFloat(style.zoom);
+      const cols = nativeCols.map(size => size * scale);
+      const rows = nativeRows.map(size => size * scale);
+      const gap = nativeGap * scale;
       const origin = element.getBoundingClientRect();
       const stage = element.parentElement.getBoundingClientRect();
       const cells = new Set();
       const defects = [];
-      if (rows.some(row => Math.abs(row - cols[0]) > 1)) defects.push('base cells are not square');
-      if (cols.some(col => col > 176.1)) defects.push('a module exceeded the original 176 px');
+      const tolerance = Math.max(1, scale);
+      if ([...nativeCols, ...nativeRows].some(size => Math.abs(size - spec.module) > 0.1)) defects.push('native module dimensions changed');
+      if (Math.abs(nativeGap - spec.gap) > 0.1) defects.push('native gap changed');
+      if (cols.length > spec.columns || origin.width > spec.width + 1) defects.push('grid exceeded its column or width cap');
+      if (cols.length === spec.columns && stage.width >= spec.width &&
+        Math.abs(origin.width - spec.width) > 1) defects.push('desktop grid did not fill its 944 px width');
       if (Math.abs((stage.left + stage.right - origin.left - origin.right) / 2) > 1) defects.push('grid is not centered');
       const offsets = lengths => lengths.map((_, i) => lengths.slice(0, i).reduce((sum, size) => sum + size + gap, 0));
       const xs = offsets(cols);
       const ys = offsets(rows);
       const outside = (inner, outer) => Math.max(outer.left - inner.left, inner.right - outer.right,
-        outer.top - inner.top, inner.bottom - outer.bottom) > 1;
+        outer.top - inner.top, inner.bottom - outer.bottom) > tolerance;
       const tiles = [...element.children].map(tile => {
         const frame = tile.firstElementChild;
         const id = frame.dataset.widget;
@@ -74,9 +87,9 @@ try {
           [...tile.childNodes].some(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim())) {
           defects.push(id + ': extra tile content');
         }
-        if (Math.abs(bounds.left - origin.left - xs[col]) > 1 || Math.abs(bounds.top - origin.top - ys[row]) > 1 ||
-          Math.abs(bounds.right - origin.left - xs[col + width - 1] - cols[col + width - 1]) > 1 ||
-          Math.abs(bounds.bottom - origin.top - ys[row + height - 1] - rows[row + height - 1]) > 1 ||
+        if (Math.abs(bounds.left - origin.left - xs[col]) > tolerance || Math.abs(bounds.top - origin.top - ys[row]) > tolerance ||
+          Math.abs(bounds.right - origin.left - xs[col + width - 1] - cols[col + width - 1]) > tolerance ||
+          Math.abs(bounds.bottom - origin.top - ys[row + height - 1] - rows[row + height - 1]) > tolerance ||
           outside(card, bounds) || outside(bounds, card)) defects.push(id + ': rendered bounds differ from its grid tracks');
         for (let y = row; y < row + height; y++) for (let x = col; x < col + width; x++) {
           const cell = x + ',' + y;
@@ -98,8 +111,30 @@ try {
             const rect = node.getBoundingClientRect();
             return rect.left + rect.width / 2;
           };
-          if (labels.length !== bars.length || labels.some((label, index) => Math.abs(centerX(label) - centerX(bars[index])) > 1)) {
+          if (labels.length !== bars.length || labels.some((label, index) => Math.abs(centerX(label) - centerX(bars[index])) > tolerance)) {
             defects.push(id + ': plot labels are offset from bars');
+          }
+        }
+        if (id === 'calendar') {
+          const days = [...frame.querySelectorAll('.ah-week button')];
+          const labelTops = [];
+          const markerTops = [];
+          for (const day of days) {
+            const button = day.getBoundingClientRect();
+            const label = day.querySelector(':scope > span').getBoundingClientRect();
+            labelTops.push(label.top - button.top);
+            const marker = day.querySelector(':scope > i')?.getBoundingClientRect();
+            if (!marker) continue;
+            markerTops.push(marker.top - button.top);
+            if (!marker.width || !marker.height || outside(marker, button) || marker.top < label.bottom - tolerance ||
+              Math.abs((marker.left + marker.right - button.left - button.right) / 2) > tolerance) {
+              defects.push(id + ': event dot is not centered below its day label');
+            }
+          }
+          if (days.length !== 7 || markerTops.length !== 5 ||
+            Math.max(...labelTops) - Math.min(...labelTops) > tolerance ||
+            Math.max(...markerTops) - Math.min(...markerTops) > tolerance) {
+            defects.push(id + ': uneven day labels or event dots');
           }
         }
         const aside = frame.querySelector('.bw-header .bw-aside')?.getBoundingClientRect();
@@ -108,8 +143,8 @@ try {
           const title = new Range();
           title.selectNodeContents(label);
           if ([...title.getClientRects()].some(rect =>
-            Math.min(rect.right, aside.right) - Math.max(rect.left, aside.left) > 1 &&
-            Math.min(rect.bottom, aside.bottom) - Math.max(rect.top, aside.top) > 1)) {
+            Math.min(rect.right, aside.right) - Math.max(rect.left, aside.left) > tolerance &&
+            Math.min(rect.bottom, aside.bottom) - Math.max(rect.top, aside.top) > tolerance)) {
             defects.push(id + ': title overlaps header controls');
           }
         }
@@ -141,8 +176,8 @@ try {
           .map(({ node }) => [node.closest('[data-widget]')?.dataset.widget, node.getAttribute('class') || node.localName].filter(Boolean).join(' '));
         defects.push('page scrolls horizontally by ' + (scrollWidth - clientWidth) + 'px (' + beyondPage.join(', ') + ')');
       }
-      return { tiles, defects, columns: cols.length, rows: rows.length };
-    });
+      return { tiles, defects, columns: cols.length, rows: rows.length, gridWidth: origin.width, scale };
+    }, gridSpec);
     assert.deepEqual(data.tiles.map(tile => tile.id).sort(), [...expected].sort(), viewport + ': incorrect tile IDs');
     for (const defect of data.defects) issues.add(viewport + ' · ' + defect);
     return data;
@@ -151,8 +186,9 @@ try {
   await page.goto(url.href);
   assert.equal(await filter('Все').getAttribute('aria-pressed'), 'true');
   assert.equal(await page.locator('.bento-page').evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(0, 0, 0)');
-  assert.equal(await page.locator('.bento-header').getByRole('switch').count(), 0);
-  assert.equal(await page.getByRole('link', { name: 'Вернуться в портфолио' }).getAttribute('href'), 'https://redheadesign.com/#reader/explorations');
+  assert.equal(await page.getByRole('button', { name: 'Светлая тема', exact: true }).count(), 0);
+  assert.equal(await page.getByRole('group', { name: 'Вариант светлой темы', exact: true }).count(), 0);
+  assert.equal(await page.getByRole('link', { name: 'Вернуться в портфолио' }).getAttribute('href'), 'https://redheadesign.com/#canvas/explorations');
   await page.getByRole('link', { name: /GitHub, звёзд: 17/ }).waitFor();
   assert.equal(await page.getByRole('link', { name: /GitHub/ }).getAttribute('href'), 'https://github.com/redheadesign/widgets');
   assert.equal(await page.getByRole('link', { name: /Telegram/ }).getAttribute('href'), 'https://t.me/redheadesign');
@@ -169,7 +205,8 @@ try {
     });
     if (hiddenFilters.length) issues.add(width + 'px · clipped filters: ' + hiddenFilters.join(', '));
     await page.screenshot({ path: fileURLToPath(new URL('landing-' + width + '.png', output)) });
-    console.log(width + 'px · ' + data.columns + ' columns × ' + data.rows + ' rows · ' + data.defects.length + ' geometry issues');
+    console.log(width + 'px · ' + data.columns + ' columns × ' + data.rows + ' rows · ' +
+      data.gridWidth.toFixed(1) + 'px grid at ' + data.scale.toFixed(3) + '× · ' + data.defects.length + ' geometry issues');
   }
 
   await page.setViewportSize({ width: 390, height: 960 });
@@ -263,8 +300,22 @@ try {
     await timer.getByRole('button', { name: 'Reset timer' }).click();
     assert(await timer.getByRole('img', { name: '16:00' }).isVisible());
   }
+
+  const highDpr = await browser.newPage({ deviceScaleFactor: 2, viewport: { width: 1440, height: 960 } });
+  try {
+    await highDpr.route('https://api.github.com/repos/redheadesign/widgets', route => route.fulfill({ json: { stargazers_count: 17 } }));
+    await highDpr.goto(url.href);
+    const energy = highDpr.getByRole('slider', { name: 'Energy usage by hour' });
+    await energy.scrollIntoViewIfNeeded();
+    const bounds = await energy.boundingBox();
+    assert(bounds, 'Energy slider is not visible');
+    await highDpr.mouse.click(bounds.x + bounds.width * 0.75, bounds.y + bounds.height / 2);
+    assert.equal(await energy.inputValue(), '17', 'Scaled slider misses the 75% pointer position at 2× DPR');
+  } finally {
+    await highDpr.close();
+  }
   assert.equal(issues.size, 0, [...issues].join('\n'));
-  console.log('Landing passes fixed-size layout, filters, keyboard, hydration, timer, dark theme and reload variation.');
+  console.log('Landing passes three-column scaling, filters, keyboard, hydration, timer, calendar dots, high-DPR pointer input, dark theme and reload variation.');
 } finally {
   await browser.close();
 }

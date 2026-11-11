@@ -2,7 +2,16 @@
 
 [Витрина](https://redheadesign.com/widgets/) · [Скачать набор](https://github.com/redheadesign/widgets/releases/latest/download/widgets-kit.zip) · [Библиотека React](docs/library.md) · [Виджеты в Telegram](docs/telegram.md)
 
-30 интерактивных карточек для сайтов, bento-сеток и сообщений Telegram. На тёмной витрине от одной до пяти колонок с квадратным модулем до 176 px. На широком экране сетка остаётся по центру. Раскладка, порядок и палитра меняются при каждом открытии. В студии можно переключить формат, настроить цвет и движение, посмотреть вариант для Telegram и забрать HTML или iframe.
+30 интерактивных карточек для сайтов, bento-сеток и сообщений Telegram. На широком экране витрина показывает три колонки и пропорционально увеличивает карточки вместе с текстом и графиками. На узких экранах сетка переходит на две или одну колонку. Раскладка, порядок и палитра меняются при каждом открытии. В студии можно переключить формат, настроить цвет и движение, посмотреть вариант для Telegram и забрать HTML или iframe.
+
+![Тёмная витрина виджетов в трёх колонках](docs/images/widgets-desktop.webp)
+
+<details>
+<summary>Витрина на телефоне</summary>
+
+![Виджеты в двух колонках на телефоне](docs/images/widgets-phone.webp)
+
+</details>
 
 ## Запустить студию
 
@@ -19,7 +28,13 @@ npm run dev -- --host 127.0.0.1
 
 ## Подключить к React
 
-Установите [архив релиза](https://github.com/redheadesign/widgets/releases/latest), затем подключите стили один раз:
+Установите React-пакет из релиза:
+
+```sh
+npm install https://github.com/redheadesign/widgets/releases/download/v1.0.3/redheadesign-widgets-1.0.3.tgz
+```
+
+Подключите стили один раз в точке входа приложения:
 
 ```tsx
 import { Widget } from '@redheadesign/widgets';

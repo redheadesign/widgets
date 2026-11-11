@@ -127,8 +127,9 @@
 .ah-cohort-empty { position: relative; --ah-cell-alpha: .035; }
 .ah-retention-row .ah-cohort:focus-visible { outline-offset: -3px; }
 
-.ah-climate-card .ah-segments { --ah-segment-width: 46px; }
+.ah-climate-card .ah-segments { --ah-segment-width: 46px; gap: 0; }
 .ah-climate-card .bw-body { display: grid; grid-template-rows: minmax(0, 1fr) auto; }
+.ah-climate-card .ah-bottom { align-items: end; }
 .ah-climate-main {
   container-type: size;
   display: grid;
@@ -193,9 +194,21 @@
 .ah-clock-foot { text-align: center; white-space: nowrap; margin-top: 4px; }
 
 .ah-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; padding-top: 2px; }
-.ah-week .ah-press { position: relative; justify-self: center; width: min(38px, 100%); min-height: 24px; aspect-ratio: 1; border: 1px solid rgb(255 255 255 / 27%); }
+.ah-week .ah-press {
+  display: grid;
+  grid-template-rows: 1em 3px;
+  place-content: center;
+  justify-items: center;
+  gap: 4px;
+  line-height: 1;
+  justify-self: center;
+  width: min(38px, 100%);
+  min-height: 24px;
+  aspect-ratio: 1;
+  border: 1px solid rgb(255 255 255 / 27%);
+}
 .bw-frame .ah-week .ah-press[aria-pressed="true"] { color: #17131a; background: #fff; }
-.ah-week i { position: absolute; bottom: 5px; width: 3px; height: 3px; border-radius: 50%; background: var(--bw-accent); }
+.ah-week i { width: 3px; height: 3px; border-radius: 50%; background: var(--bw-accent); }
 .ah-week .ah-press[aria-pressed="true"] i { background: #17131a; }
 .ah-agenda { display: grid; gap: 6px; padding-top: 18px; }
 .ah-agenda > div { display: grid; grid-template-columns: 50px 1fr; gap: 7px; align-items: center; min-height: 21px; padding-left: 10px; position: relative; }
@@ -276,9 +289,15 @@
   .ah-dial-caption .bw-dot-number { height: clamp(20px, min(24cqw, 24cqh), 36px); width: auto; }
   .ah-dial-caption .ah-value-row > span { margin-top: 0; font-size: 12px; }
   .ah-dial-caption small { font-size: 11px; }
-  .ah-climate-card .ah-bottom { display: grid; align-self: center; justify-items: start; gap: 8px; }
+  .ah-climate-card .ah-bottom {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    justify-items: start;
+    gap: 8px;
+  }
   .ah-climate-readouts { gap: 12px; }
-  .bw-frame .ah-fan { min-height: 28px; }
+  .bw-frame .ah-fan { justify-self: end; min-height: 28px; }
 }
 
 @container bloom (width < 290px) {
@@ -325,7 +344,9 @@
 }
 
 @container bloom (width < 248px) {
-  .ah-climate-card .bw-header { display: grid; gap: 4px; justify-content: stretch; justify-items: start; margin-bottom: 4px; }
+  .ah-climate-card .bw-header { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; margin-bottom: 4px; }
+  .ah-climate-card .ah-segments { width: 100%; --ah-segment-width: calc((100% - 4px) / 3); }
+  .ah-climate-card .ah-segments .ah-press { flex: 1 1 0; width: auto; }
   .ah-climate-readouts { flex-direction: column; gap: 3px; }
   .ah-climate-readouts > span { font-size: 13px; line-height: 1.12; }
   .ah-climate-readouts small { font-size: 11px; }
@@ -378,6 +399,12 @@
   .ah-dial-caption { gap: 2px; }
   .ah-dial-caption .bw-dot-number { height: 20px; }
   .ah-dial-caption small { display: none; }
+}
+
+@container bloom (width < 248px) and (height < 176px) {
+  .ah-climate-readouts { gap: 1px; }
+  .ah-climate-readouts > span { font-size: 12px; line-height: 1; }
+  .ah-climate-readouts small { font-size: 10px; }
 }
 
 @container bloom (248px <= width < 310px) and (height < 176px) {

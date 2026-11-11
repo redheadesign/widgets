@@ -686,7 +686,7 @@ export function CalendarWidget() {
       <div className="ah-week" role="group" aria-label="November 9 to 15, 2026" onKeyDown={(event) => moveSelection(event, select)}>
         {week.map(({ name, short, events: entries }, index) => (
           <Press key={name} aria-label={`${name}, November ${9 + index}`} aria-pressed={index === day} tabIndex={index === day ? 0 : -1} onClick={() => select(index)}>
-            {short}{entries.length > 0 && <i />}
+            <span>{short}</span>{entries.length > 0 && <i aria-hidden="true" />}
           </Press>
         ))}
       </div>

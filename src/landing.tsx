@@ -1,12 +1,17 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { ArrowLeft, ChartNoAxesCombined, Github, Grid2X2, HeartPulse, House, Layers3, Send, Star, Sun, type LucideIcon } from 'lucide-react';
-import { BloomWidget, tones, widgetCatalog, type Category, type Tone } from './widgets';
+import { BloomWidget, dimensions, tones, widgetCatalog, type Category, type Tone } from './widgets';
 import { packBento, randomFrom, shuffle, type TileFit } from './bento-layout';
 import './landing.css';
 
 const repository = 'redheadesign/widgets';
 const telegram = 'https://t.me/redheadesign';
 const gap = 16;
+const unit = dimensions.small[0];
+const maxColumns = 3;
+const minColumnWidth = 160;
+const gridWidth = (columns: number) => columns * unit + (columns - 1) * gap;
+const maxScale = 944 / gridWidth(maxColumns);
 const filters: { id: 'all' | Category; label: string; icon: LucideIcon }[] = [
   { id: 'all', label: 'Все', icon: Grid2X2 },
   { id: 'analytics', label: 'Аналитика', icon: ChartNoAxesCombined },
@@ -48,12 +53,12 @@ function GitHubLink() {
 export function BentoLanding() {
   const [seed] = useState(() => crypto.getRandomValues(new Uint32Array(1))[0]);
   const [filter, setFilter] = useState<'all' | Category>('all');
-  const [columnLimit, setColumnLimit] = useState(1);
+  const [stageWidth, setStageWidth] = useState(unit);
   const stage = useRef<HTMLElement>(null);
   useLayoutEffect(() => {
     const node = stage.current!;
     function measure() {
-      setColumnLimit(Math.min(5, Math.max(1, Math.floor((node.clientWidth + gap) / (160 + gap)))));
+      setStageWidth(node.clientWidth);
     }
     measure();
     const observer = new ResizeObserver(measure);
@@ -70,7 +75,9 @@ export function BentoLanding() {
     }));
   }, [seed]);
   const cards = useMemo(() => deck.filter(card => filter === 'all' || card.widget.category === filter), [deck, filter]);
+  const columnLimit = Math.min(maxColumns, Math.max(1, Math.floor((stageWidth + gap) / (minColumnWidth + gap))));
   const columns = Math.min(columnLimit, cards.length);
+  const scale = Math.min(maxScale, stageWidth / gridWidth(columns));
   const placements = useMemo(() => {
     const tiles = packBento(cards.length, columns, seed ^ columns, {
       wide: cards.filter(card => preferredFit(card.widget.id) === 'wide').length,
@@ -112,7 +119,9 @@ export function BentoLanding() {
         </div>
       </header>
       <main className="bento-stage" ref={stage} aria-label="Виджеты">
-        <div className="bento-grid" style={{ '--bento-columns': columns, '--bento-gap': `${gap}px` } as CSSProperties}>
+        <div className="bento-grid" style={{
+          '--bento-columns': columns, '--bento-gap': `${gap}px`, '--bento-unit': `${unit}px`, '--bento-scale': scale,
+        } as CSSProperties}>
           {placements.map(({ widget, tone, settings, tile }) => (
             <div className="bento-tile" key={widget.id} style={{
               gridColumn: `${tile.column + 1} / span ${tile.width}`,
