@@ -91,7 +91,7 @@ export function BentoLanding() {
     <div className="bento-page">
       <header className="bento-header">
         <div className="bento-identity">
-          <a className="bento-link bento-back" href="https://redheadesign.com/#reader/explorations" aria-label="Вернуться в портфолио" title="Вернуться в портфолио">
+          <a className="bento-link bento-back" href="https://redheadesign.com/#canvas/explorations" aria-label="Вернуться в портфолио" title="Вернуться в портфолио">
             <ArrowLeft size={15} aria-hidden="true" />
             <img src={`${import.meta.env.BASE_URL}redheadesign.svg`} alt="" width="22" height="22" />
           </a>
