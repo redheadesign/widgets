@@ -172,8 +172,9 @@ export function RevenueWidget() {
             ))}
             <motion.path d={curve} initial={draw ? { opacity: 0.18 } : false} animate={{ opacity: 0.55 }}
               transition={transition} key={`curve-${period}`} fill="none" stroke="white" strokeWidth="1.35" vectorEffect="non-scaling-stroke" />
-            <motion.circle initial={false} animate={{ cx: points[active][0], cy: points[active][1] - 13.5 }} transition={transition} r="4.6" fill={accent} />
           </svg>
+          <motion.span className="ah-revenue-marker" aria-hidden="true" initial={false} transition={transition}
+            animate={{ left: `${points[active][0] / 3.36}%`, top: `${(points[active][1] - 13.5) / 1.78}%` }} />
           <div className="ah-plot-targets" role="group" aria-label="Revenue by period" onKeyDown={moveSelection}
             style={{ gridTemplateColumns: `repeat(${points.length}, 1fr)` }}>
             {data.names.map((name, index) => (

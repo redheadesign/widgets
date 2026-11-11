@@ -5,7 +5,7 @@ import { chromium } from 'playwright-core';
 
 const url = new URL(process.argv[2] ?? 'http://localhost:5173/widgets/');
 const output = new URL('../qa/run/', import.meta.url);
-const widths = [320, 390, 768, 1440, 1920];
+const widths = [320, 390, 768, 1024, 1440, 1920];
 const seeds = [1, 13, 42, 77, 169, 277, 904, 2026];
 const categories = {
   'Аналитика': ['revenue', 'users', 'funnel', 'traffic', 'goal', 'retention'],
