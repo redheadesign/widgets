@@ -95,20 +95,20 @@ const icons: Record<string, LucideIcon> = {
   'trending-up': TrendingUp, users: Users, waves: Waves, wind: Wind, zap: Zap,
 };
 
-export function Icon({ name, size = 14 }: { name: string; size?: number }) {
+export function Icon({ name, size = 14, fill = 'none' }: { name: string; size?: number; fill?: string }) {
   const Symbol = icons[name] || Activity;
-  return <Symbol aria-hidden="true" size={size} strokeWidth={1.65} />;
+  return <Symbol aria-hidden="true" size={size} strokeWidth={1.65} fill={fill} />;
 }
 
-export function WidgetCard({ title, icon, aside, children, className = '' }: {
-  title: ReactNode; icon?: string; aside?: ReactNode; children?: ReactNode; className?: string;
+export function WidgetCard({ title, label, icon, aside, children, className = '' }: {
+  title?: ReactNode; label?: string; icon?: string; aside?: ReactNode; children?: ReactNode; className?: string;
 }) {
   return (
-    <section className={`bw-card ${className}`}>
-      <header className="bw-header">
-        <div className="bw-label">{icon ? <Icon name={icon} /> : null}<span>{title}</span></div>
+    <section className={`bw-card ${className}`} aria-label={label}>
+      {(title != null || aside != null) && <header className="bw-header">
+        {title != null ? <div className="bw-label">{icon ? <Icon name={icon} /> : null}<span>{title}</span></div> : null}
         {aside != null ? <div className="bw-aside">{aside}</div> : null}
-      </header>
+      </header>}
       <div className="bw-body">{children}</div>
     </section>
   );

@@ -210,12 +210,13 @@ export function UsersWidget() {
     ));
   });
   return (
-    <WidgetCard title="Users" icon="users" aside={
-      <Press className="ah-live" aria-label={running ? 'Pause live users' : 'Resume live users'} aria-pressed={running} onClick={() => setRunning((value) => !value)}>
-        <span className="ah-live-dot" data-live={live} />{live ? 'Live' : 'Paused'}
-      </Press>
-    }>
-      <div className="ah-user-value"><DotNumber value={integers.format(active)} size={30} /><div className="bw-muted">active now</div></div>
+    <WidgetCard label="Live users" className="ah-users-card">
+      <div className="ah-user-value">
+        <DotNumber value={integers.format(active)} size={30} />
+        <Press className="ah-live" aria-label={running ? 'Pause live users' : 'Resume live users'} aria-pressed={running} onClick={() => setRunning((value) => !value)}>
+          <span className="ah-live-dot" data-live={live} aria-hidden="true" />{live ? 'active now' : 'Paused'}
+        </Press>
+      </div>
       <svg viewBox="0 0 146 26" preserveAspectRatio="none" className="ah-user-chart" aria-hidden="true">
         <g className="ah-chart-fade">{columns.slice(0, -1)}</g>
         {columns.at(-1)}
@@ -228,19 +229,19 @@ const funnel = [{ title: 'Visits', value: 24810 }, { title: 'Cart', value: 6204 
 
 export function FunnelWidget() {
   const [selected, select] = useState(3);
-  const ratio = (funnel[selected].value / funnel[0].value) * 100;
   return (
-    <WidgetCard title={<><span className="ah-funnel-title-long">Conversion funnel</span><span className="ah-funnel-title-short">Funnel</span></>}
-      icon="filter" aside={<span className="bw-muted">{selected === 3 ? 'Conv.' : funnel[selected].title} {decimals.format(ratio)}%</span>}>
+    <WidgetCard className="ah-funnel-card" label="Conversion funnel">
       <div className="ah-funnel" role="group" aria-label="Funnel stages" onKeyDown={moveSelection}>
-        {funnel.map(({ title, value }, index) => (
-          <Press className="ah-funnel-row" key={title} aria-pressed={selected === index} tabIndex={selected === index ? 0 : -1}
-            {...inspect(() => select(index))}>
+        {funnel.map(({ title, value }, index) => {
+          const ratio = value / funnel[0].value * 100;
+          const count = integers.format(value);
+          return <Press className="ah-funnel-row" key={title} aria-pressed={selected === index} tabIndex={selected === index ? 0 : -1}
+            aria-label={`${title}, ${count}, ${decimals.format(ratio)}% of visits`} {...inspect(() => select(index))}>
             <span>{title}</span>
-            <span className="ah-funnel-track"><span style={{ width: `${(value / funnel[0].value) * 100}%` }} /></span>
-            <span>{integers.format(value)}</span>
-          </Press>
-        ))}
+            <span className="ah-funnel-track"><span style={{ width: `${ratio}%` }} /></span>
+            <span>{count}</span>
+          </Press>;
+        })}
       </div>
     </WidgetCard>
   );
@@ -312,7 +313,7 @@ export function GoalWidget() {
   }, [duration, ease, progress, value]);
 
   return (
-    <WidgetCard title="Monthly goal" icon="target" aside={<span className="bw-muted">{money.format(value * 620)} of {money.format(62000)}</span>}>
+    <WidgetCard className="ah-goal-card" title="Monthly goal" icon="target" aside={<span className="bw-muted">{money.format(value * 620)} of {money.format(62000)}</span>}>
       <div className="ah-goal">
         <svg viewBox="0 0 200 111" aria-hidden="true" className="ah-goal-svg">
           <defs><linearGradient id={gradient} gradientUnits="userSpaceOnUse" x1="16" x2="172" y1="0" y2="0"><stop stopColor="#3977f4" /><stop offset=".53" stopColor="#84d4f9" /><stop offset=".76" stopColor="#ffc669" /><stop offset="1" stopColor="#ff713e" /></linearGradient></defs>
@@ -372,7 +373,6 @@ export function RetentionWidget() {
 }
 
 const climateModes = [{ title: 'Cool' }, { title: 'Auto' }, { title: 'Heat' }];
-const climateCaptions = ['Cooling to', 'Hold at', 'Heating to'];
 const temperatureAngle = (temperature: number) => -135 + ((temperature - 16) / 14) * 270;
 
 export function ThermostatWidget() {
@@ -400,7 +400,7 @@ export function ThermostatWidget() {
     setTemperature(clamp(value, 16, 30));
   };
   return (
-    <WidgetCard className="ah-climate-card" title="Climate · Living room" icon="thermometer" aside={<Segments label="Climate mode" options={climateModes} selected={mode} onChange={setMode} />}>
+    <WidgetCard className="ah-climate-card" label="Climate · Living room" aside={<Segments label="Climate mode" options={climateModes} selected={mode} onChange={setMode} />}>
       <div className="ah-climate-main">
         <div className="ah-dial" role="slider" tabIndex={0} aria-label="Target temperature" aria-valuemin={16} aria-valuemax={30} aria-valuenow={temperature} aria-valuetext={`${temperature} °C`}
           onKeyDown={keyboard} onPointerDown={(event) => {
@@ -425,7 +425,7 @@ export function ThermostatWidget() {
               <circle cx="112" cy="10" r="9" fill="white" />
             </motion.g>
           </svg>
-          <div className="ah-dial-caption" aria-hidden="true"><small>{climateCaptions[mode]}</small><div className="ah-value-row"><DotNumber value={temperature} size={42} /><span>°C</span></div><small>Drag to adjust</small></div>
+          <div className="ah-dial-value" aria-hidden="true"><DotNumber value={temperature} size={42} /></div>
         </div>
       </div>
       <div className="ah-bottom"><div className="ah-climate-readouts"><span><small>Indoor</small>26.4°</span><span><small>Humidity</small>54%</span></div><Press className="bw-action ah-fan" icon="fan" bright={fan} aria-pressed={fan} onClick={() => setFan((current) => !current)}>Fan</Press></div>
@@ -465,7 +465,7 @@ export function EnergyWidget() {
   const [hour, setHour] = useState(19);
   const transition = useTransition();
   return (
-    <WidgetCard title="Energy" icon="zap" aside={<span className="bw-muted">{clockFormat.format(hour)}:00</span>}>
+    <WidgetCard label="Energy">
       <div className="ah-energy">
         <div className="ah-value-row"><DotNumber value={energyValue.format(energyData[hour])} size={30} /><span className="bw-muted">kWh</span></div>
         <div className="ah-energy-plot">
@@ -553,10 +553,10 @@ export function LockWidget() {
   const [locked, setLocked] = useState(true);
   const [holding, setHolding] = useState(false);
   const hold = useRef<number | null>(null);
-  const hasToggled = useRef(false);
   const { speed } = useWidgetSettings();
   const transition = useTransition(0.2);
   const holdSeconds = 0.82 / Math.max(0.05, speed);
+  const shackle = locked ? 'M10 15V10a6 6 0 0 1 12 0V15' : 'M10 15V8a6 6 0 0 1 12 0V9';
 
   useEffect(() => () => { if (hold.current !== null) window.clearTimeout(hold.current); }, []);
 
@@ -565,10 +565,7 @@ export function LockWidget() {
     hold.current = null;
     setHolding(false);
   };
-  const toggle = () => {
-    hasToggled.current = true;
-    setLocked((value) => !value);
-  };
+  const toggle = () => setLocked((value) => !value);
   const start = () => {
     if (hold.current !== null) return;
     setHolding(true);
@@ -579,8 +576,8 @@ export function LockWidget() {
     }, holdSeconds * 1000);
   };
   return (
-    <WidgetCard title="Front door">
-      <div className="ah-lock">
+    <WidgetCard label="Front door">
+      <div className="ah-lock" data-unlocked={!locked}>
         <Press className="ah-lock-press" data-holding={holding} aria-label={locked ? 'Hold to unlock front door' : 'Hold to lock front door'} aria-pressed={!locked}
           onPointerDown={(event) => {
             if (event.button !== 0 || !event.isPrimary) return;
@@ -597,17 +594,23 @@ export function LockWidget() {
           }} onKeyUp={(event) => {
             if (event.key === ' ' || event.key === 'Enter') { event.preventDefault(); cancel(); }
           }} onClick={(event) => { if (event.detail === 0) toggle(); }}>
-          <motion.span className="ah-lock-icon" key={String(locked)} initial={hasToggled.current ? { opacity: 0.4, y: 3, scale: 0.88 } : false}
-            animate={{ opacity: 1, y: 0, scale: 1 }} transition={transition}>
-            <Icon name={locked ? 'lock' : 'lock-open'} size={24} />
-          </motion.span>
+          <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <motion.path initial={false} animate={{ d: shackle }} transition={transition} />
+            <rect x="7" y="15" width="18" height="13" rx="3" />
+            <path d="M16 20v3" />
+          </svg>
+          {!locked && transition.duration > 0 && <motion.span className="ah-lock-confirmation" aria-hidden="true"
+            initial={{ opacity: 0.7, scale: 1 }} animate={{ opacity: 0, scale: 1.36 }}
+            transition={{ ...transition, duration: transition.duration * 2 }} />}
           <svg viewBox="0 0 60 60" aria-hidden="true" className="ah-fill-svg">
-            <motion.circle cx="30" cy="30" r="28" fill="none" stroke={accent} strokeWidth="1.8" strokeLinecap="round" transform="rotate(-90 30 30)"
+            <motion.circle cx="30" cy="30" r="28" fill="none" stroke={locked ? accent : 'var(--ah-unlocked)'} strokeWidth="2.2" strokeLinecap="round" transform="rotate(-90 30 30)"
               initial={false} animate={{ pathLength: holding ? 1 : 0, opacity: holding ? 1 : 0 }}
               transition={{ pathLength: { duration: holding && transition.duration > 0 ? holdSeconds : 0, ease: 'linear' }, opacity: { duration: transition.duration * 0.5 } }} />
           </svg>
         </Press>
-        <div role="status">{locked ? 'Locked' : 'Unlocked'}</div>
+        <div className="ah-lock-state" role="status">
+          {locked ? <><span>Front door</span><span className="bw-visually-hidden">, locked</span></> : 'Unlocked'}
+        </div>
         <div className="bw-muted">{holding ? (locked ? 'Unlocking…' : 'Locking…') : (locked ? 'Hold to unlock' : 'Hold to lock')}</div>
       </div>
     </WidgetCard>
@@ -642,7 +645,7 @@ export function ClockWidget() {
       style={{ transformBox: 'view-box', transformOrigin: '50% 50%' }} initial={false} animate={{ rotate: angle }} transition={handTransition} />
   );
   return (
-    <WidgetCard title="Local time" icon="clock">
+    <WidgetCard className="ah-clock-card" label="Local time">
       <Press className="ah-clock-face" aria-label={`${display.slice(0, 5)}, show ${digital ? 'analog' : 'digital'} clock`} onClick={() => setDigital((current) => !current)}>
         <motion.span className="ah-clock-dial" key={String(digital)} initial={digital ? { opacity: 0.4, scale: 0.94 } : false}
           animate={{ opacity: 1, scale: 1 }} transition={transition}>
@@ -661,7 +664,6 @@ export function ClockWidget() {
           )}
         </motion.span>
       </Press>
-      <div className="bw-muted ah-clock-foot">Caracas · UTC−4</div>
     </WidgetCard>
   );
 }
@@ -682,7 +684,8 @@ export function CalendarWidget() {
   const events = week[day].events;
   const eventLabel = new Intl.PluralRules('en-US').select(events.length) === 'one' ? 'event' : 'events';
   return (
-    <WidgetCard title="November 2026" icon="calendar" aside={<span className="bw-muted">{events.length} {eventLabel}</span>}>
+    <WidgetCard className="ah-calendar-card" icon="calendar" aside={`${events.length} ${eventLabel}`}
+      title={<><span className="ah-calendar-month">November 2026</span><span className="ah-calendar-month-short">Nov 2026</span></>}>
       <div className="ah-week" role="group" aria-label="November 9 to 15, 2026" onKeyDown={(event) => moveSelection(event, select)}>
         {week.map(({ name, short, events: entries }, index) => (
           <Press key={name} aria-label={`${name}, November ${9 + index}`} aria-pressed={index === day} tabIndex={index === day ? 0 : -1} onClick={() => select(index)}>
@@ -706,17 +709,10 @@ const tasks = [
 
 export function RemindersWidget() {
   const [completed, setCompleted] = useState([false, false, true, false]);
-  const transition = useTransition();
   const count = completed.filter(Boolean).length;
   return (
-    <WidgetCard title="Reminders" icon="list-checks" aside={
-      <span className="ah-reminder-status bw-muted" role="status">
-        <svg viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="6.7" fill="none" stroke="white" strokeOpacity=".22" strokeWidth="2" />
-          <motion.circle cx="9" cy="9" r="6.7" fill="none" stroke={accent} strokeWidth="2" strokeLinecap="round" transform="rotate(-90 9 9)"
-            initial={false} animate={{ pathLength: count / tasks.length, opacity: count > 0 ? 1 : 0 }} transition={transition} /></svg>
-        {count} of 4
-      </span>
-    }>
+    <WidgetCard label="Reminders" className="ah-reminders-card">
+      <span className="bw-visually-hidden" role="status">{count} of {tasks.length}</span>
       <div className="ah-reminders" role="group" aria-label="Reminder checklist">
         {tasks.map(({ title, compact }, index) => (
           <Press key={title} role="checkbox" aria-label={title} aria-checked={completed[index]} onClick={() => setCompleted((previous) => previous.map((done, at) => at === index ? !done : done))}>
@@ -812,7 +808,7 @@ export function MusicWidget() {
   }
 
   return (
-    <WidgetCard className="ah-music-card" title="Now playing" aside={<span className="bw-muted">{trackIndex + 1} / {musicTracks.length}</span>}>
+    <WidgetCard className="ah-music-card" label="Music player">
       <span hidden ref={sourceRef} className="ah-audio-source" />
       <audio ref={audioRef} preload="none"
         onLoadedMetadata={event => {
@@ -843,7 +839,9 @@ export function MusicWidget() {
           animate={{ opacity: 1, y: 0 }} transition={transition}><div title={track.title}>{track.title}</div><span className="bw-muted" role={failed ? 'status' : undefined}>{failed ? 'Tap play to retry' : track.artist}</span></motion.div>
         <div className="ah-controls">
           <Press icon="skip-back" aria-label="Previous track" onClick={() => skip(-1)} />
-          <Press icon={playing ? 'pause' : 'play'} bright aria-label={playing ? 'Pause track' : 'Play track'} onClick={toggle} />
+          <Press className="bw-circle" bright aria-label={playing ? 'Pause track' : 'Play track'} onClick={toggle}>
+            <Icon name={playing ? 'pause' : 'play'} fill={playing ? undefined : 'currentColor'} />
+          </Press>
           <Press icon="skip-forward" aria-label="Next track" onClick={() => skip(1)} />
         </div>
       </div>
@@ -925,7 +923,7 @@ export const analyticsHome: WidgetDefinition[] = [
   { id: 'lock', title: 'Front door', category: 'home', size: 'small', tone: 'graphite', interaction: 'Hold the lock button, Space or Enter to toggle the lock.', Component: LockWidget },
   { id: 'clock', title: 'Local time', category: 'everyday', size: 'small', tone: 'graphite', interaction: 'Tap the clock to switch between analog and digital time.', Component: ClockWidget },
   { id: 'calendar', title: 'Week calendar', category: 'everyday', size: 'wide', tone: 'indigo', interaction: 'Select a day to see its agenda.', Component: CalendarWidget },
-  { id: 'reminders', title: 'Reminders', category: 'everyday', size: 'wide', tone: 'violet', interaction: 'Check off a reminder to update the completion ring.', Component: RemindersWidget },
+  { id: 'reminders', title: 'Reminders', category: 'everyday', size: 'wide', tone: 'violet', interaction: 'Check or uncheck reminders.', Component: RemindersWidget },
   { id: 'music', title: 'Music player', category: 'everyday', size: 'wide', tone: 'ember', interaction: 'Play, pause, skip tracks or seek on the waveform.', Component: MusicWidget },
   { id: 'stocks', title: 'Stock ticker', category: 'everyday', size: 'small', tone: 'red', interaction: 'Switch BTC and ETH or scrub their price history.', Component: StocksWidget },
 ];

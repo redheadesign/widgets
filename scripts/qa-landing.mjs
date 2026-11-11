@@ -9,11 +9,11 @@ const widths = [320, 390, 768, 1024, 1440, 1920];
 const seeds = [1, 13, 42, 77, 169, 277, 904, 2026];
 const gridSpec = { columns: 3, module: 176, gap: 16, width: 944 };
 const categories = {
-  'Аналитика': ['revenue', 'users', 'funnel', 'traffic', 'goal', 'retention'],
+  'Аналитика': ['revenue', 'users', 'funnel', 'goal', 'retention'],
   'Здоровье': ['heart-rate', 'activity', 'steps', 'sleep', 'lung-capacity', 'hydration', 'glucose', 'breathing'],
   'Погода': ['weather', 'hourly', 'air-quality', 'uv-index', 'wind', 'sun'],
   'Дом': ['thermostat', 'lights', 'energy', 'timer', 'lock'],
-  'На каждый день': ['clock', 'calendar', 'reminders', 'music', 'stocks'],
+  'На каждый день': ['clock', 'reminders', 'music', 'stocks'],
 };
 const all = Object.values(categories).flat().sort();
 const issues = new Set();
@@ -80,7 +80,8 @@ try {
           defects.push(id + ': needs a 2×1 tile');
         }
         if (id === 'timer' && height !== 1) defects.push(id + ': needs a one-row tile');
-        if (width === 1 && height === 2 && !['hydration', 'breathing', 'lock', 'lights', 'clock', 'weather', 'thermostat'].includes(id)) {
+        if (id === 'clock' && (width !== 1 || height !== 1)) defects.push(id + ': needs a square tile');
+        if (width === 1 && height === 2 && !['hydration', 'breathing', 'lock', 'lights', 'weather', 'thermostat'].includes(id)) {
           defects.push(id + ': is not eligible for a portrait tile');
         }
         if (tile.children.length !== 1 || !frame.matches('.bw-frame') ||
@@ -113,28 +114,6 @@ try {
           };
           if (labels.length !== bars.length || labels.some((label, index) => Math.abs(centerX(label) - centerX(bars[index])) > tolerance)) {
             defects.push(id + ': plot labels are offset from bars');
-          }
-        }
-        if (id === 'calendar') {
-          const days = [...frame.querySelectorAll('.ah-week button')];
-          const labelTops = [];
-          const markerTops = [];
-          for (const day of days) {
-            const button = day.getBoundingClientRect();
-            const label = day.querySelector(':scope > span').getBoundingClientRect();
-            labelTops.push(label.top - button.top);
-            const marker = day.querySelector(':scope > i')?.getBoundingClientRect();
-            if (!marker) continue;
-            markerTops.push(marker.top - button.top);
-            if (!marker.width || !marker.height || outside(marker, button) || marker.top < label.bottom - tolerance ||
-              Math.abs((marker.left + marker.right - button.left - button.right) / 2) > tolerance) {
-              defects.push(id + ': event dot is not centered below its day label');
-            }
-          }
-          if (days.length !== 7 || markerTops.length !== 5 ||
-            Math.max(...labelTops) - Math.min(...labelTops) > tolerance ||
-            Math.max(...markerTops) - Math.min(...markerTops) > tolerance) {
-            defects.push(id + ': uneven day labels or event dots');
           }
         }
         const aside = frame.querySelector('.bw-header .bw-aside')?.getBoundingClientRect();
@@ -242,6 +221,7 @@ try {
     assert(after.tiles.every(tile => tile[color]), 'Missing ' + color);
     assert.notDeepEqual(colors(after.tiles, color), colors(before.tiles, color), 'Reload keeps ' + color + ' colors');
     assert.equal(colors(after.tiles, color).hydration, colors(before.tiles, color).hydration, 'Hydration should retain its blue palette');
+    assert.equal(colors(after.tiles, color).sun, colors(before.tiles, color).sun, 'Sun should retain its amber palette');
   }
   assert.equal(await filter('Все').getAttribute('aria-pressed'), 'true');
 
@@ -315,7 +295,7 @@ try {
     await highDpr.close();
   }
   assert.equal(issues.size, 0, [...issues].join('\n'));
-  console.log('Landing passes three-column scaling, filters, keyboard, hydration, timer, calendar dots, high-DPR pointer input, dark theme and reload variation.');
+  console.log('Landing passes three-column scaling, filters, keyboard, hydration, timer, high-DPR pointer input, dark theme and reload variation.');
 } finally {
   await browser.close();
 }

@@ -6,15 +6,16 @@ import type { WidgetDefinition } from './core.js';
 import { referenceSurface } from './lighting';
 import './health-weather.css';
 
-function Circle({ icon, label, onClick, light = false, pressed, disabled = false }: {
+function Circle({ icon, label, onClick, light = false, pressed, disabled = false, filledIcon = false }: {
   icon: string;
   label: string;
   onClick: () => void;
   light?: boolean;
   pressed?: boolean;
   disabled?: boolean;
+  filledIcon?: boolean;
 }) {
-  return <button type="button" className={`bw-circle hw-circle${light ? ' hw-circle--light' : ''}`} aria-label={label} aria-pressed={pressed} disabled={disabled} onClick={onClick}><Icon name={icon} size={15} /></button>;
+  return <button type="button" className={`bw-circle hw-circle${light ? ' hw-circle--light' : ''}`} aria-label={label} aria-pressed={pressed} disabled={disabled} onClick={onClick}><Icon name={icon} size={15} fill={filledIcon ? 'currentColor' : undefined} /></button>;
 }
 
 function Action({ children, icon, onClick, pressed, compactIcon }: {
@@ -111,7 +112,7 @@ const ACTIVITY = [
 function Activity() {
   const [selected, setSelected] = useState(0);
   const item = ACTIVITY[selected];
-  return <WidgetCard title="Activity">
+  return <WidgetCard label="Activity">
     <div className="hw-stack hw-activity">
       <button className="hw-activity-control" type="button" onClick={() => setSelected(index => (index + 1) % ACTIVITY.length)} aria-label={`${item.name} ${item.percent} percent. Show next activity ring`}>
         <svg viewBox="0 0 104 104" aria-hidden="true">{ACTIVITY.map((ring, index) => {
@@ -123,7 +124,7 @@ function Activity() {
         })}</svg>
         <strong>{item.percent}%</strong>
       </button>
-      <p className="hw-center bw-muted"><span className="hw-white">{item.name}</span> {item.amount}</p>
+      <p className="hw-activity-footer hw-center bw-muted"><span className="hw-white">{item.name}</span> {item.amount}</p>
     </div>
   </WidgetCard>;
 }
@@ -135,7 +136,7 @@ const WHOLE_NUMBER = new Intl.NumberFormat('en-US');
 function Steps() {
   const [day, setDay] = useState(1);
   const progress = Math.round(STEPS[day] / 100);
-  return <WidgetCard title="Steps" icon="footprints" aside={<span className="bw-muted hw-caption">Streak · 234<span className="hw-step-streak-long"> days</span><span className="hw-step-streak-short">d</span></span>}>
+  return <WidgetCard label="Steps">
     <div className="hw-steps">
       <div className="hw-steps-readout"><DotNumber value={WHOLE_NUMBER.format(STEPS[day])} size={34} /><p className="bw-muted">{WEEKDAYS[day]} · {progress}% of goal</p><div className="hw-step-progress" style={{ '--hw-step-progress': `${Math.min(100, progress)}%` } as CSSProperties} aria-hidden="true"><span className="hw-step-progress-marker" /></div></div>
       <div className="hw-step-days" role="group" aria-label="Day of week">{WEEKDAYS.map((weekday, index) => (
@@ -154,10 +155,14 @@ function Sleep() {
   const minutes = 23 * 60 + 10 + Math.round(selected * (462 / 31));
   const time = `${String(Math.floor(minutes / 60) % 24).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
   const stage = `${time} · ${STAGE_NAMES[SLEEP_STAGES[selected]]}`;
-  return <WidgetCard title="Sleep" icon="moon" aside={<span className="bw-muted hw-caption">{stage}</span>}>
+  return <WidgetCard label="Sleep">
     <div className="hw-stack hw-sleep">
-      <div className="hw-number-line"><DotNumber value="7:42" size={28} label="7 hours 42 minutes" /><span className="bw-unit">h<span className="hw-sleep-hours"> · 23:10 to 06:52</span></span></div>
+      <div className="hw-sleep-summary">
+        <DotNumber value="7:42" size={28} label="7 hours 42 minutes" />
+        <span className="bw-unit">Sleep</span>
+      </div>
       <Scrub label="Sleep stage" max={31} value={selected} valueText={stage} onChange={setSelected}>
+        <span className="hw-sleep-selection bw-muted hw-caption" aria-hidden="true">{stage}</span>
         <svg className="hw-graphic" viewBox="0 0 320 58" preserveAspectRatio="none" aria-hidden="true">
           <g className="hw-plot-fade">
             {STAGE_NAMES.map((name, index) => (
@@ -196,7 +201,6 @@ function lungArc(arc: typeof LUNG_ARCS[number]) {
 }
 
 function LungCapacity() {
-  const [showInfo, setShowInfo] = useState(false);
   const { duration } = useWidgetMotion();
   const { elapsed, active: running, toggle } = useProgress(50, LUNG_DURATION);
   const progress = (elapsed ?? 0) / LUNG_DURATION;
@@ -205,7 +209,7 @@ function LungCapacity() {
   const [mainArc] = LUNG_ARCS;
   const markerX = mainArc.center - mainArc.width * Math.cos(markerAngle);
   const markerY = 100 - mainArc.height * Math.sin(markerAngle);
-  return <WidgetCard title={running ? 'Test in progress' : 'Latest test'} icon="wind" aside={<Circle icon="info" label="About the lung capacity demo" pressed={showInfo} onClick={() => setShowInfo(visible => !visible)} />}>
+  return <WidgetCard label="Lung capacity demo">
     <div className="hw-stack hw-lung">
       <div className="hw-lung-value"><DotNumber value={LUNG_NUMBER.format(value)} size={64} /><span className="bw-muted">Liters</span></div>
       <div className="hw-lung-visual">
@@ -217,8 +221,7 @@ function LungCapacity() {
           <motion.circle cx={markerX} cy={markerY} r="3" fill="white" initial={false} animate={{ opacity: running ? 1 : .95 }} transition={{ duration: duration(.16) }} />
         </svg>
       </div>
-      {showInfo && <p role="status" className="hw-lung-info">Demo measurement. Repeat to replay.</p>}
-      <div className="hw-between hw-lung-footer"><div><p>Lung capacity</p><p className="bw-muted hw-caption"><span className="hw-lung-best-long">Personal best</span><span className="hw-lung-best-short">Best</span> · 3.6 L</p></div><Action compactIcon icon={running ? 'pause' : 'rotate-ccw'} onClick={toggle}>{running ? 'Stop' : 'Repeat'}</Action></div>
+      <div className="hw-between hw-lung-footer"><div><p aria-live="polite">{running ? 'Test in progress' : 'Lung capacity'}</p><p className="bw-muted hw-caption"><span className="hw-lung-best-long">Personal best</span><span className="hw-lung-best-short">Best</span> · 3.6 L</p></div><Action compactIcon icon={running ? 'pause' : 'rotate-ccw'} onClick={toggle}>{running ? 'Stop' : 'Repeat'}</Action></div>
     </div>
   </WidgetCard>;
 }
@@ -323,7 +326,7 @@ function Breathing() {
           </g>
         </motion.svg>
       </div>
-      <div className="hw-between"><span className="hw-caption" aria-hidden={active || undefined}>{status}</span><span className="bw-visually-hidden" role="status">{active ? phase : seconds === 60 ? 'Session complete' : ''}</span><Circle icon={active ? 'pause' : 'play'} label={active ? 'Stop breathing session' : 'Start one-minute breathing session'} onClick={toggle} light /></div>
+      <div className="hw-between"><span className="hw-caption hw-breathe-caption" aria-hidden={active || undefined}>{status}</span><span className="bw-visually-hidden" role="status">{active ? phase : seconds === 60 ? 'Session complete' : ''}</span><Circle icon={active ? 'pause' : 'play'} label={active ? 'Stop breathing session' : 'Start one-minute breathing session'} onClick={toggle} filledIcon={!active} light /></div>
     </div>
   </WidgetCard>;
 }
@@ -409,8 +412,9 @@ function Hourly() {
   const gradient = useId();
   const data = HOURLY[hour];
   const markerX = hourlyX(hour);
-  const readout = `${String(hour + 9).padStart(2, '0')}:00 · ${data.temp}° · ${data.rain}% rain`;
-  return <WidgetCard title="Next hours" icon="cloud-sun" className="hw-hourly-card" aside={<span className="bw-muted hw-caption">{readout}</span>}>
+  const summary = `${String(hour + 9).padStart(2, '0')}:00 · ${data.temp}°`;
+  const readout = `${summary} · ${data.rain}% rain`;
+  return <WidgetCard label="Hourly forecast" title={summary} icon="cloud-sun">
     <div className="hw-stack hw-hourly">
       <Scrub label="Hourly forecast" max={HOURLY.length - 1} value={hour} valueText={readout} onChange={setHour}>
         <svg className="hw-graphic" viewBox="0 0 336 82" preserveAspectRatio="none" aria-hidden="true">
@@ -441,7 +445,7 @@ function AirQuality() {
   const [selected, setSelected] = useState(0);
   const { duration } = useWidgetMotion();
   const pollutant = AIR[selected];
-  return <WidgetCard title="Air quality" icon="leaf">
+  return <WidgetCard title="Air quality" icon="leaf" className="hw-air-card">
     <div className="hw-stack hw-air">
       <svg className="hw-graphic hw-air-chart" viewBox="-6 -4 132 38" aria-hidden="true">
         <g className="hw-plot-fade">
@@ -488,7 +492,7 @@ const WIND = [
 function Wind() {
   const [index, setIndex] = useState(0);
   const reading = WIND[index];
-  return <WidgetCard title="Wind" icon="wind">
+  return <WidgetCard label="Wind">
     <div className="hw-stack hw-wind">
       <button className="hw-wind-control" type="button" onClick={() => setIndex(value => (value + 1) % WIND.length)} aria-label={`${reading.direction} wind, ${reading.speed} kilometers per hour. Show next reading`}>
         <svg viewBox="0 0 104 104" aria-hidden="true">{Array.from({ length: 48 }, (_, i) => {
@@ -520,17 +524,20 @@ function SunPath() {
   const readout = `${formatHour(minutes)} · ${Math.floor(remaining / 60)} h ${remaining % 60} min of light left`;
   const sunX = (27 + 282 * progress) / 336;
   const sunY = (69 - 58 * 4 * progress * (1 - progress)) / 87;
-  return <WidgetCard title="Sun" icon="sunrise" className="hw-sun-card" aside={<span className="bw-muted hw-caption">{readout}</span>}>
-    <div className="hw-stack hw-sun" style={{ '--hw-sun-dusk': dusk } as CSSProperties}>
+  return <WidgetCard label="Sun" className="hw-sun-card">
+    <div className="hw-stack hw-sun" style={{ '--hw-sun-dusk': dusk, '--hw-sun-x': `${sunX * 100}%` } as CSSProperties}>
       <div className="hw-sun-dusk" aria-hidden="true" />
       <Scrub label="Time of day" min={SUNRISE} max={SUNSET} value={minutes} valueText={readout} onChange={setMinutes}>
         <div className="hw-sun-ground" aria-hidden="true" />
         <svg className="hw-graphic hw-plot-fade" viewBox="0 0 336 87" preserveAspectRatio="none" aria-hidden="true">
           <path d="M27 69 Q168 -47 309 69" fill="none" stroke="#ffe1a07a" strokeDasharray="2 4" vectorEffect="non-scaling-stroke" />
         </svg>
-        <span className="hw-sun-marker" aria-hidden="true" style={{ left: `${sunX * 100}%`, top: `${sunY * 100}%` }} />
+        <span className="hw-sun-marker" aria-hidden="true" style={{ top: `${sunY * 100}%` }} />
       </Scrub>
-      <div className="hw-between bw-muted hw-caption"><span>Sunrise 6:18</span><span>Sunset 18:24</span></div>
+      <div className="hw-between bw-muted hw-caption hw-sun-times">
+        <span>Sunrise<strong>{formatHour(SUNRISE)}</strong></span>
+        <span>Sunset<strong>{formatHour(SUNSET)}</strong></span>
+      </div>
     </div>
   </WidgetCard>;
 }

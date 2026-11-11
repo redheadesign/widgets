@@ -22,9 +22,11 @@ const filters: { id: 'all' | Category; label: string; icon: LucideIcon }[] = [
 ];
 const palette = (Object.keys(tones) as Tone[]).filter(tone => tone !== 'amber' && tone !== 'olive');
 const accents = ['#bfe4ee', '#d7caff', '#85f2dd', '#ffaac6', '#a6caff', '#ffd5e9', '#f3f3fd', '#ffa18a', '#a8f1a0', '#84dfff'];
+const landingWidgets = widgetCatalog.filter(({ id }) => id !== 'calendar' && id !== 'traffic');
 const wideWidgets = new Set(['music', 'glucose', 'funnel']);
-const portraitWidgets = new Set(['hydration', 'breathing', 'lock', 'lights', 'clock', 'weather', 'thermostat']);
+const portraitWidgets = new Set(['hydration', 'breathing', 'lock', 'lights', 'weather', 'thermostat']);
 const preferredFit = (id: string): TileFit | undefined => {
+  if (id === 'clock') return 'square';
   if (id === 'timer') return 'short';
   if (wideWidgets.has(id)) return 'wide';
   if (portraitWidgets.has(id)) return 'portrait';
@@ -69,9 +71,9 @@ export function BentoLanding() {
     const random = randomFrom(seed);
     const backgrounds = shuffle(palette, random);
     const highlights = shuffle(accents, random);
-    return shuffle(widgetCatalog, random).map((widget, index) => ({
-      widget, tone: widget.id === 'hydration' ? undefined : backgrounds[index % backgrounds.length],
-      settings: { accent: widget.id === 'hydration' ? '#a8c8f2' : highlights[index % highlights.length] },
+    return shuffle(landingWidgets, random).map((widget, index) => ({
+      widget, tone: widget.id === 'sun' || widget.id === 'hydration' ? undefined : backgrounds[index % backgrounds.length],
+      settings: { accent: widget.id === 'sun' ? '#ffe793' : widget.id === 'hydration' ? '#a8c8f2' : highlights[index % highlights.length] },
     }));
   }, [seed]);
   const cards = useMemo(() => deck.filter(card => filter === 'all' || card.widget.category === filter), [deck, filter]);
@@ -82,6 +84,7 @@ export function BentoLanding() {
     const tiles = packBento(cards.length, columns, seed ^ columns, {
       wide: cards.filter(card => preferredFit(card.widget.id) === 'wide').length,
       short: cards.some(card => preferredFit(card.widget.id) === 'short'),
+      square: cards.some(card => preferredFit(card.widget.id) === 'square'),
       portrait: cards.filter(card => preferredFit(card.widget.id) === 'portrait').length,
     });
     const waiting = [...cards];
