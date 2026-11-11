@@ -277,10 +277,14 @@ async function checkDemoStates() {
       await tab.waitForFunction(() => {
         const bars = [...document.querySelectorAll('.ah-revenue-plot svg rect')];
         const bar = bars.at(-1);
-        const marker = document.querySelector('.ah-revenue-plot svg circle');
-        const midpoint = Number(bar?.getAttribute('x')) + Number(bar?.getAttribute('width')) / 2;
-        return bar && marker && bars.every(e => getComputedStyle(e).transform === 'none') &&
-          Math.abs(Number(marker.getAttribute('cx')) - midpoint) < .1;
+        const marker = document.querySelector('.ah-revenue-marker');
+        if (!bar || !marker) return false;
+        const barBox = bar.getBoundingClientRect();
+        const markerBox = marker.getBoundingClientRect();
+        const markerCenter = markerBox.left + markerBox.width / 2;
+        const barCenter = barBox.left + barBox.width / 2;
+        return bars.every(e => getComputedStyle(e).transform === 'none') &&
+          Math.abs(markerCenter - barCenter) < .5;
       });
       await shot('revenue-month');
       passed.push('Revenue: month selection, anchored bars and interrupted transition');

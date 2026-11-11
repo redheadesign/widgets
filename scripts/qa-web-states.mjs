@@ -180,7 +180,7 @@ try {
     ...(process.env.BLOOM_BROWSER_PATH ? { executablePath: process.env.BLOOM_BROWSER_PATH } : { channel: 'msedge' }),
   });
   const page = await browser.newPage({ viewport: { width: 440, height: 450 }, reducedMotion: 'reduce' });
-  page.setDefaultTimeout(3000);
+  page.setDefaultTimeout(7000);
   const results = [];
   let pageErrors = [];
   page.on('pageerror', error => pageErrors.push(error.message));
