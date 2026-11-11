@@ -1,0 +1,14 @@
+node_modules/
+dist/
+lib/
+redheadesign-widgets-*.tgz
+telegram-dist/
+.qa-baseline/
+qa/run/
+qa/*.png
+qa/*.jpg
+qa/*.webm
+design-qa.md
+docs/polish-playbook.md
+*.local
+*.log

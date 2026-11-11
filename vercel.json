@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "redirects": [
+    { "source": "/widgets", "destination": "/widgets/", "permanent": true }
+  ],
+  "rewrites": [
+    { "source": "/widgets/", "destination": "/index.html" },
+    { "source": "/widgets/:asset+", "destination": "/:asset+" }
+  ]
+}

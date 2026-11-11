@@ -1,0 +1,144 @@
+import { mkdir, writeFile } from 'node:fs/promises';
+import { deflateSync } from 'node:zlib';
+import { glowFields } from '../src/widgets/lighting-data.ts';
+
+const size = 384;
+const xPositions = [6, 24, 50, 76, 94];
+const yPositions = [4, 16, 33, 50, 67, 84, 96];
+const output = new URL('../src/widgets/lighting-assets/', import.meta.url);
+
+// A zero endpoint slope joins the outer, constant color smoothly. The interior
+// tangents use the weighted harmonic mean of adjacent slopes to avoid ringing.
+function spline(positions, values) {
+  const widths = positions.slice(1).map((position, index) => position - positions[index]);
+  const slopes = widths.map((width, index) => (values[index + 1] - values[index]) / width);
+  const tangents = values.map((_, index) => {
+    const left = slopes[index - 1];
+    const right = slopes[index];
+    if (left === undefined || right === undefined || left * right <= 0) return 0;
+    const weightLeft = 2 * widths[index] + widths[index - 1];
+    const weightRight = widths[index] + 2 * widths[index - 1];
+    return (weightLeft + weightRight) / (weightLeft / left + weightRight / right);
+  });
+
+  return (position) => {
+    if (position <= positions[0]) return values[0];
+    if (position >= positions.at(-1)) return values.at(-1);
+    const index = positions.findIndex((next) => next > position) - 1;
+    const width = widths[index];
+    const t = (position - positions[index]) / width;
+    const tSquared = t * t;
+    const tCubed = tSquared * t;
+    return (
+      (2 * tCubed - 3 * tSquared + 1) * values[index] +
+      (tCubed - 2 * tSquared + t) * width * tangents[index] +
+      (-2 * tCubed + 3 * tSquared) * values[index + 1] +
+      (tCubed - tSquared) * width * tangents[index + 1]
+    );
+  };
+}
+
+// Spatially distribute rounding by less than one RGB code. This avoids bands in
+// dark areas without adding a visible grain layer or changing the palette.
+const dither = [
+  [0, 48, 12, 60, 3, 51, 15, 63],
+  [32, 16, 44, 28, 35, 19, 47, 31],
+  [8, 56, 4, 52, 11, 59, 7, 55],
+  [40, 24, 36, 20, 43, 27, 39, 23],
+  [2, 50, 14, 62, 1, 49, 13, 61],
+  [34, 18, 46, 30, 33, 17, 45, 29],
+  [10, 58, 6, 54, 9, 57, 5, 53],
+  [42, 26, 38, 22, 41, 25, 37, 21],
+];
+
+function renderPixels(rows) {
+  const rgb = rows.map((row) => row.map((hex) => Buffer.from(hex, 'hex')));
+  const rowSplines = rgb.map((row) =>
+    [0, 1, 2].map((channel) => spline(xPositions, row.map((color) => color[channel]))),
+  );
+  const pixels = Buffer.alloc(size * size * 3);
+  for (let x = 0; x < size; x++) {
+    const xPosition = (x + 0.5) * 100 / size;
+    const channels = [0, 1, 2].map((channel) =>
+      spline(yPositions, rowSplines.map((row) => row[channel](xPosition))),
+    );
+    for (let y = 0; y < size; y++) {
+      const yPosition = (y + 0.5) * 100 / size;
+      const threshold = (dither[y % 8][x % 8] + 0.5) / 64;
+      const offset = (y * size + x) * 3;
+      for (let channel = 0; channel < 3; channel++) {
+        pixels[offset + channel] = Math.floor(channels[channel](yPosition) + threshold);
+      }
+    }
+  }
+  return pixels;
+}
+
+function pngChunk(type, data) {
+  const bytes = Buffer.concat([Buffer.from(type, 'ascii'), data]);
+  let crc = 0xffffffff;
+  for (const byte of bytes) {
+    crc ^= byte;
+    for (let bit = 0; bit < 8; bit++) {
+      crc = (crc >>> 1) ^ ((crc & 1) ? 0xedb88320 : 0);
+    }
+  }
+  const length = Buffer.alloc(4);
+  length.writeUInt32BE(data.length);
+  const checksum = Buffer.alloc(4);
+  checksum.writeUInt32BE((~crc) >>> 0);
+  return Buffer.concat([length, bytes, checksum]);
+}
+
+function encodePng(pixels) {
+  const stride = size * 3;
+  const scanlines = Buffer.alloc((stride + 1) * size);
+  for (let y = 0; y < size; y++) {
+    const row = y * stride;
+    const scanline = y * (stride + 1);
+    scanlines[scanline] = 1; // PNG Sub filter, the previous pixel is the predictor.
+    for (let x = 0; x < stride; x++) {
+      const previous = x >= 3 ? pixels[row + x - 3] : 0;
+      scanlines[scanline + x + 1] = (pixels[row + x] - previous + 256) % 256;
+    }
+  }
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(size);
+  header.writeUInt32BE(size, 4);
+  header[8] = 8; // 8 bits per channel
+  header[9] = 2; // RGB
+  return Buffer.concat([
+    Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+    pngChunk('IHDR', header),
+    pngChunk('sRGB', Buffer.from([0])),
+    pngChunk('IDAT', deflateSync(scanlines, { level: 9 })),
+    pngChunk('IEND', Buffer.alloc(0)),
+  ]);
+}
+
+await mkdir(output, { recursive: true });
+const ids = [];
+const surfaces = [];
+let bytes = 0;
+for (const [id, rows] of Object.entries(glowFields)) {
+  const image = encodePng(renderPixels(rows));
+  await writeFile(new URL(`${id}.png`, output), image);
+  bytes += image.length;
+  ids.push(id);
+  surfaces.push(`  --bw-light-${id}: url('./${id}.png');`);
+}
+
+await writeFile(new URL('index.ts', output), [
+  '// Generated by node --experimental-strip-types scripts/render-lighting.mjs.',
+  "import './surfaces.css';",
+  `export const lightingIds = new Set<string>(${JSON.stringify(ids, null, 2)});`,
+  '',
+].join('\n'));
+await writeFile(new URL('surfaces.css', output), [
+  '/* Generated by scripts/render-lighting.mjs. */',
+  '.bw-frame {',
+  ...surfaces,
+  '}',
+  '',
+].join('\n'));
+console.log(`Rendered ${ids.length} lighting surfaces (${bytes.toLocaleString('en-US')} bytes).`);

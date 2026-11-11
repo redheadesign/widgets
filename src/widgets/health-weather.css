@@ -1,0 +1,448 @@
+.hw-stack { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.hw-between { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.hw-number-line { display: flex; align-items: baseline; gap: 8px; white-space: nowrap; }
+.hw-center { text-align: center; }
+.hw-caption { font-size: 11px; }
+.hw-white { color: var(--bw-white); }
+.hw-stack p, .hw-between p { margin: 0; }
+.hw-graphic { display: block; width: 100%; min-height: 0; }
+.hw-action { padding-right: 4px; }
+.hw-action-icon { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: #fff; color: #17131a; flex: none; }
+.hw-circle.hw-circle--light { background: #fff; color: #17131a; }
+.hw-scrub { --hw-scrub-inset: 0%; position: relative; min-height: 0; display: flex; flex: 1; border-radius: 6px; }
+.hw-scrub:has(input:focus-visible) { outline: 2px solid var(--bw-focus-ring, var(--bw-accent)); outline-offset: 2px; }
+.hw-scrub input {
+  position: absolute;
+  inset-block: 0;
+  inset-inline: var(--hw-scrub-inset);
+  width: calc(100% - 2 * var(--hw-scrub-inset));
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  appearance: none;
+  opacity: 0;
+  cursor: ew-resize;
+  touch-action: pan-y;
+}
+.hw-scrub input::-webkit-slider-thumb { appearance: none; width: 1px; height: 16px; }
+.hw-scrub input::-moz-range-thumb { border: 0; width: 1px; height: 16px; }
+.hw-scrub input:active { cursor: grabbing; }
+.hw-scrub .hw-graphic { height: 100%; pointer-events: none; }
+.hw-scrub-halo { opacity: 0; transition: opacity calc(.16s / var(--bw-speed)) ease-out; }
+.hw-scrub:has(input:is(:active, :focus-visible)) .hw-scrub-halo { opacity: .7; }
+
+.hw-heart { gap: 4px; }
+.hw-heart-top { margin-top: 1px; align-items: flex-end; }
+.hw-heart-stats { display: flex; gap: 16px; text-align: right; }
+.hw-heart-stats span, .hw-heart-stats strong { display: block; }
+.hw-heart-stats span { font-size: 11px; color: var(--bw-dim); }
+.hw-heart-stats strong { font-size: 13px; font-weight: 500; }
+.hw-heart-chart { flex: 1; }
+.hw-heart-trace {
+  transform-box: view-box;
+  /* ai-design-check-ignore-next-line no-endless-loop -- The ECG is a live reading. Widget settings pause it. */
+  animation: hw-ecg-sweep calc(1.8s / var(--bw-speed)) linear infinite;
+  transition: stroke-width calc(.18s / var(--bw-speed)) ease-out;
+}
+.hw-heart[data-measuring="true"] .hw-heart-trace { stroke-width: 2; }
+@keyframes hw-ecg-sweep { to { transform: translateX(-25%); } }
+
+.hw-activity { align-items: center; justify-content: space-between; gap: 4px; }
+.hw-activity-control, .hw-wind-control { position: relative; padding: 0; background: transparent; border: 0; border-radius: 50%; flex: 1 1 auto; min-height: 0; width: 100%; max-width: 99px; display: grid; place-items: center; }
+.hw-activity-control svg, .hw-wind-control svg { width: 100%; height: 100%; min-height: 0; overflow: visible; }
+.hw-activity-control strong { position: absolute; inset: 0; display: grid; place-items: center; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.hw-activity-ring { opacity: .46; transition: opacity calc(.23s / var(--bw-speed)) ease-out; }
+.hw-activity-ring[data-selected="true"] { opacity: 1; }
+
+.hw-steps { align-items: end; height: 100%; }
+.hw-steps-readout { flex: 1; min-width: 0; }
+.hw-steps-readout p { margin-top: 8px; }
+.hw-step-streak-short { display: none; }
+.hw-step-progress {
+  --hw-step-dot: radial-gradient(circle at 2px 2px, currentColor 1.1px, transparent 1.35px) repeat-x 0 0 / 6px 4px;
+  position: relative;
+  height: 4px;
+  margin-top: 16px;
+  margin-bottom: 4px;
+  max-width: 160px;
+  color: #fff4;
+  background: var(--hw-step-dot);
+}
+.hw-step-progress::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  clip-path: inset(0 calc(100% - var(--hw-step-progress)) 0 0);
+  color: #fff;
+  background: var(--hw-step-dot);
+  transition: clip-path calc(.26s / var(--bw-speed)) ease-out;
+}
+.hw-step-progress-marker {
+  position: absolute;
+  top: -4px;
+  left: var(--hw-step-progress);
+  width: 2px;
+  height: 12px;
+  border-radius: 2px;
+  background: var(--bw-accent);
+  transform: translateX(-50%);
+  transition: left calc(.26s / var(--bw-speed)) ease-out;
+}
+.hw-step-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); width: 48%; height: 100%; align-items: stretch; gap: 1px; }
+.hw-step-days button { display: flex; flex-direction: column; align-items: center; justify-content: end; gap: 4px; background: transparent; border: 0; padding: 0; border-radius: 5px; color: var(--bw-dim); font-size: 11px; }
+.hw-step-days button[aria-pressed='true'] { color: #fff; }
+.hw-step-column { display: flex; flex-direction: column; gap: 4px; color: #fff5; transition: color calc(.2s / var(--bw-speed)) ease-out; }
+.hw-step-days button[data-near-goal="true"] .hw-step-column { color: color-mix(in srgb, var(--bw-accent) 49%, transparent); }
+.hw-step-days button[aria-pressed='true'] .hw-step-column { color: #fff; }
+.hw-step-column i { width: 3px; height: 3px; border-radius: 50%; background: currentColor; }
+
+.hw-sleep .hw-number-line { flex-shrink: 0; }
+.hw-sleep .hw-scrub { --hw-scrub-inset: 1.4%; }
+.hw-sleep > .hw-between { margin-top: 8px; }
+.hw-sleep-stage, .hw-hourly-rain { transition: opacity calc(.16s / var(--bw-speed)) ease-out, fill calc(.16s / var(--bw-speed)) ease-out; }
+
+.hw-lung { position: relative; justify-content: space-between; }
+.hw-lung-value { display: grid; justify-items: center; gap: 12px; padding-top: 16px; }
+.hw-lung-visual { width: 100%; margin-top: auto; position: relative; }
+.hw-lung-visual .hw-graphic { height: 103px; overflow: visible; }
+.hw-lung-info { position: absolute; z-index: 1; inset: auto 6% 54px; border: 1px solid #ffffff26; background: #201522; border-radius: 12px; padding: 8px 12px; color: #f5e3ef; box-shadow: 0 4px 22px #08040980; }
+.hw-lung-footer p + p { margin-top: 4px; }
+.hw-lung-best-short { display: none; }
+
+.hw-hydration-card .bw-body { position: static; }
+.hw-water {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  overflow: hidden;
+  border-radius: var(--bw-radius);
+  pointer-events: none;
+}
+.hw-water-fill {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 100%;
+  pointer-events: none;
+  transform: translateY(calc(var(--hw-water-offset) - 8px));
+  transition: transform calc(.65s / var(--bw-speed)) cubic-bezier(.2, .75, .25, 1);
+}
+.hw-water-fill > svg {
+  display: block;
+  width: 100%;
+  height: calc(100% + 16px);
+  mask-image: linear-gradient(transparent, #000 15%);
+}
+.hw-water-wave {
+  transform-box: view-box;
+  /* ai-design-check-ignore-next-line no-endless-loop -- Moving liquid is the requested Hydration state. Widget settings pause it. */
+  animation: hw-water-drift calc(var(--hw-wave-period) / var(--bw-speed)) linear calc(var(--hw-wave-delay) / var(--bw-speed)) infinite;
+}
+.hw-water-wave--back { --hw-wave-period: 23s; --hw-wave-delay: -5s; }
+.hw-water-wave--middle { --hw-wave-period: 29s; --hw-wave-delay: -9s; animation-direction: reverse; }
+.hw-water-wave--front { --hw-wave-period: 19s; --hw-wave-delay: -3s; }
+@keyframes hw-water-drift { to { transform: translateX(var(--hw-wave-travel)); } }
+.hw-hydration { position: relative; justify-content: space-between; padding-top: 16px; }
+.hw-hydration .hw-hydration-unit {
+  /* ai-design-check-ignore-next-line spacing-scale -- Measured unit position in the Hydration reference. */
+  margin-top: 10px;
+}
+.hw-hydration .hw-caption { font-variant-numeric: tabular-nums; }
+
+.hw-glucose { height: 100%; align-items: end; }
+.hw-glucose .bw-muted { margin-top: 8px; }
+.hw-glucose-value { font-size: 39px; font-weight: 300; }
+.hw-glucose-ring { width: 86px; height: 86px; flex: 0 0 86px; align-self: center; display: grid; grid-template-rows: auto auto; justify-content: center; align-content: center; justify-items: center; gap: 4px; color: var(--bw-accent); position: relative; margin-right: 8px; }
+.hw-glucose-ring > svg:first-child { position: absolute; inset: 0; width: 100%; height: 100%; }
+.hw-glucose-progress { transition: stroke-dasharray calc(.3s / var(--bw-speed)) ease-out; }
+.hw-glucose-ring .bw-dot-number { color: var(--bw-white); }
+.hw-glucose-ring span { color: var(--bw-dim); }
+
+.hw-breathing { justify-content: space-between; }
+.hw-breathe-visual {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  container-type: size;
+  mask-image: linear-gradient(transparent, #000 12%, #000 88%, transparent);
+}
+.hw-breathe-orb {
+  --hw-breathe-light: color-mix(in oklab, var(--bw-tint) 28%, #ffd2c4);
+  --hw-breathe-heat: color-mix(in oklab, var(--bw-tint) 66%, #fd7897);
+  --hw-breathe-shadow: color-mix(in oklab, var(--bw-tint) 46%, #230e3d);
+  position: relative;
+  isolation: isolate;
+  width: min(112px, 75cqh, 54cqw);
+  aspect-ratio: 1;
+}
+.hw-breathe-orb::before {
+  position: absolute;
+  inset: -39%;
+  z-index: -1;
+  background: radial-gradient(circle, var(--hw-breathe-heat), color-mix(in srgb, var(--hw-breathe-heat) 39%, transparent) 37%, transparent 69%);
+  opacity: calc(.44 + var(--hw-breathe-energy) * .44);
+  content: '';
+}
+.hw-breathe-surface {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 30% 16%, var(--hw-breathe-light), var(--hw-breathe-heat) 48%, var(--hw-breathe-shadow) 84%);
+  box-shadow: inset 0 0 0 1px rgb(255 228 245 / 27%);
+}
+.hw-breathe-surface::before,
+.hw-breathe-surface::after {
+  position: absolute;
+  inset: -24%;
+  content: '';
+  /* ai-design-check-ignore-next-line no-endless-loop -- Slow material drift helps indicate the breathing guide. Motion settings pause it. */
+  animation: hw-breathe-flow calc(12s / var(--bw-speed)) ease-in-out infinite alternate;
+}
+.hw-breathe-surface::before {
+  background:
+    radial-gradient(ellipse at 34% 30%, var(--hw-breathe-light), transparent 28%),
+    radial-gradient(ellipse at 64% 59%, var(--hw-breathe-shadow), transparent 38%),
+    radial-gradient(ellipse at 28% 69%, var(--hw-breathe-heat), transparent 38%);
+}
+.hw-breathe-surface::after {
+  background: radial-gradient(ellipse at 71% 47%, color-mix(in srgb, var(--hw-breathe-light) 62%, transparent), transparent 26%);
+  animation-duration: calc(16s / var(--bw-speed));
+  animation-delay: calc(-5s / var(--bw-speed));
+  animation-direction: alternate-reverse;
+}
+@keyframes hw-breathe-flow {
+  from { transform: translate(-7%, 4%) rotate(-24deg) scale(1.02); }
+  to { transform: translate(8%, -5%) rotate(28deg) scale(1.18); }
+}
+.bw-frame[data-paused="true"] .hw-breathe-surface::before,
+.bw-frame[data-paused="true"] .hw-breathe-surface::after { animation-play-state: paused; }
+.bw-frame[data-reduced="true"] .hw-breathe-surface::before,
+.bw-frame[data-reduced="true"] .hw-breathe-surface::after { animation: none; }
+
+.hw-weather-card .bw-body { position: static; }
+.bw-frame:not([data-custom-tone="true"]) .hw-weather-card::before,
+.bw-frame[data-custom-tone="true"] .hw-weather-backdrop { display: none; }
+.hw-weather-backdrop {
+  --hw-weather-fade: calc(.3s / var(--bw-speed));
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: var(--bw-radius);
+  overflow: hidden;
+  pointer-events: none;
+  opacity: min(1, var(--bw-glow));
+  filter: var(--bw-light-filter, none);
+  background: var(--bw-surface, none) center / 100% 100% no-repeat;
+}
+.hw-weather-backdrop-state {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background-size: 100% 100%;
+  transition: opacity var(--hw-weather-fade) ease-in-out;
+}
+.hw-weather-card--clear .hw-weather-backdrop-state--clear,
+.hw-weather-card--rain .hw-weather-backdrop-state--rain { opacity: 1; }
+/* The Tokyo field fades in over Madrid before the hidden amber field clears. */
+.hw-weather-card--rain .hw-weather-backdrop-state--clear { transition-delay: var(--hw-weather-fade); }
+.hw-weather { justify-content: space-between; position: relative; isolation: isolate; }
+.hw-temperature { position: relative; align-self: flex-start; margin-top: 4px; font-size: 57px; line-height: .95; font-weight: 250; letter-spacing: -.048em; }
+.hw-weather-reading { position: relative; }
+.hw-weather-reading strong { font-size: 14px; font-weight: 500; }
+.hw-weather-reading p { margin-top: 4px; }
+.hw-sky { position: absolute; pointer-events: none; z-index: -1; width: 132px; height: 102px; inset-inline-end: 4px; inset-block-start: -12px; overflow: visible; }
+.hw-sky--rain .hw-sky-cloud { transform: translateY(-12px); opacity: .8; }
+.hw-sky-rain { opacity: .35; }
+
+.hw-hourly, .hw-sun { gap: 8px; }
+.hw-hourly .hw-scrub { --hw-scrub-inset: 2.38%; margin-top: 12px; }
+.hw-air { align-items: flex-start; justify-content: space-between; }
+.hw-air-chart { flex: 1; max-height: 44px; margin-top: 4px; }
+.hw-air .hw-between { width: 100%; }
+.hw-air .hw-tabs button { min-width: 30px; }
+.hw-uv { justify-content: space-between; gap: 4px; }
+.hw-uv .hw-graphic { flex: 1; }
+.hw-uv .hw-between { align-items: end; }
+.hw-uv-marker, .hw-wind-needle { transform-box: view-box; transition: rotate calc(.28s / var(--bw-speed)) ease-out; }
+.hw-uv-marker { transform-origin: 72px 57px; }
+.hw-uv-tick { transition: opacity calc(.25s / var(--bw-speed)) ease-out, r calc(.25s / var(--bw-speed)) ease-out; }
+.bw-frame .hw-chip { border: 0; border-radius: 999px; background: #0004; padding: 4px 8px; min-height: 24px; font-size: 11px; color: var(--bw-white); }
+
+.hw-wind { align-items: center; justify-content: space-between; gap: 4px; }
+.hw-wind-control { max-width: 96px; }
+.hw-wind-needle { transform-origin: 52px 52px; }
+.hw-north { position: absolute; top: 11%; left: 0; right: 0; text-align: center; font-size: 11px; font-weight: 600; }
+.hw-wind-value { display: grid; justify-items: center; gap: 2px; position: absolute; left: 0; right: 0; top: 30%; font-size: 22px; font-weight: 300; line-height: 1; font-variant-numeric: tabular-nums; }
+.hw-wind-value small { font-size: 12px; color: var(--bw-dim); }
+.hw-sun-card .bw-body { position: static; }
+.hw-sun-dusk {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: var(--bw-radius);
+  background:
+    radial-gradient(ellipse at 52% 106%, color-mix(in oklab, var(--bw-tint) 25%, #381830) 0%, transparent 64%),
+    linear-gradient(172deg, #110d24e6, #080712b3 58%, #170d20de);
+  opacity: var(--hw-sun-dusk);
+  transition: opacity calc(.24s / var(--bw-speed)) ease-out;
+  pointer-events: none;
+}
+.hw-sun .hw-scrub { --hw-scrub-inset: 8.04%; margin-top: 8px; }
+.hw-sun > .hw-between { color: var(--bw-white); }
+.hw-sun-ground {
+  position: absolute;
+  inset: 79.31% 2.38% 0;
+  background: linear-gradient(transparent, #180f045c 40%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent);
+  pointer-events: none;
+}
+.hw-sun-ground::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  background: #ffda865e;
+  content: '';
+}
+.hw-sun-marker {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: clamp(24px, 18cqh, 36px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in oklab, #ffcf5466, #ff995f66 calc(var(--hw-sun-dusk) * 100%)), #ffc3642e 43%, transparent 70%);
+  transform: translate(-50%, -50%);
+  transition: scale calc(.16s / var(--bw-speed)) ease-out;
+  pointer-events: none;
+}
+.hw-sun-marker::before {
+  width: 43%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: color-mix(in oklab, #ffe793, #ffb16f calc(var(--hw-sun-dusk) * 100%));
+  content: '';
+}
+.hw-scrub:has(input:active) .hw-sun-marker { scale: 1.08; }
+
+@container bloom (max-height: 336px) {
+  .hw-lung {
+    display: grid;
+    grid-template-columns: minmax(88px, .7fr) minmax(0, 1.3fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 4px 12px;
+    align-items: center;
+  }
+  .hw-lung-value { justify-items: start; gap: 4px; padding-top: 0; }
+  .hw-lung-value .bw-dot-number { width: auto; height: clamp(34px, calc(30cqh - 15px), 64px); }
+  .hw-lung-visual { display: grid; align-items: center; height: 100%; margin-top: 0; }
+  .hw-lung-visual .hw-graphic { height: 100%; max-height: 103px; }
+  .hw-lung-footer { grid-column: 1 / -1; }
+  .hw-lung-info { inset-inline: 0; bottom: 48px; }
+}
+
+@container bloom (max-width: 230px) {
+  .hw-action[data-compact-icon="true"] { width: 32px; height: 32px; padding: 4px; }
+  .hw-action[data-compact-icon="true"] .hw-action-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .hw-heart-top, .hw-heart-top .hw-number-line { gap: 4px; }
+  .hw-heart-top .bw-dot-number { width: auto; height: 32px; }
+  .hw-heart-stats { gap: 8px; }
+
+  .hw-steps { display: grid; grid-template-rows: auto minmax(0, 1fr); }
+  .hw-steps-readout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 4px;
+    align-items: center;
+  }
+  .hw-steps-readout .bw-dot-number { width: 100%; height: auto; max-height: 26px; }
+  .hw-steps-readout p { margin: 0; font-size: 11px; }
+  .hw-step-streak-long { display: none; }
+  .hw-step-streak-short { display: inline; }
+  .hw-step-progress { grid-column: 1 / -1; max-width: none; margin: 0; }
+  .hw-step-days { width: 100%; }
+  .hw-step-days button { gap: 2px; }
+  .hw-step-column { gap: 1px; }
+  .hw-step-column i { width: 2.5px; height: 2.5px; }
+
+  .hw-sleep-hours { display: none; }
+  .hw-sleep > .hw-between { margin-top: 4px; }
+  .hw-lung-best-long { display: none; }
+  .hw-lung-best-short { display: inline; }
+  .hw-sky { width: min(132px, 69cqw); height: auto; opacity: .72; }
+  .hw-temperature { font-size: 50px; }
+  .hw-glucose .hw-number-line { flex-wrap: wrap; gap: 4px; }
+  .hw-glucose .bw-muted { margin-top: 4px; }
+  .hw-glucose-ring { flex-basis: clamp(55px, 34cqw, 72px); width: clamp(55px, 34cqw, 72px); height: auto; aspect-ratio: 1; margin-right: 0; gap: 2px; }
+  .hw-glucose-ring .bw-dot-number { width: auto; height: 16px; }
+  .hw-glucose-card .bw-header, .hw-hourly-card .bw-header, .hw-sun-card .bw-header { flex-wrap: wrap; row-gap: 2px; }
+  .hw-glucose-card .bw-aside, .hw-hourly-card .bw-aside, .hw-sun-card .bw-aside { flex-basis: 100%; white-space: normal; }
+  .hw-hourly .hw-scrub, .hw-sun .hw-scrub { margin-top: 0; }
+  .hw-sun > .hw-between { line-height: 1.2; }
+  .hw-sun > .hw-between > :last-child { text-align: end; }
+}
+
+@container bloom (max-width: 230px) and (max-height: 336px) {
+  .hw-lung { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; gap: 2px; }
+  .hw-lung-value { display: flex; align-items: baseline; gap: 8px; }
+  .hw-lung-value .bw-dot-number { height: 28px; }
+  .hw-lung-visual .hw-graphic path { vector-effect: non-scaling-stroke; }
+  .hw-lung-visual .hw-graphic circle { r: 5px; }
+  .hw-lung-info { padding: 4px 8px; font-size: 11px; }
+  .hw-lung-footer p + p { margin-top: 2px; }
+}
+
+@container bloom (min-width: 260px) and (max-height: 224px) {
+  .hw-activity, .hw-wind, .hw-air, .hw-uv {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+  }
+  .hw-activity-control, .hw-wind-control { justify-self: center; width: min(100%, 99px); height: min(100%, 99px); }
+  .hw-air { grid-template-columns: minmax(76px, .65fr) minmax(0, 1.35fr); grid-template-rows: minmax(0, 1fr) auto; }
+  .hw-air-chart { grid-area: 1 / 2; max-height: 64px; margin: 0; }
+  .hw-air > .bw-dot-number { grid-area: 1 / 1; }
+  .hw-air > .hw-between { grid-column: 1 / -1; }
+  .hw-uv > .hw-graphic { grid-area: 1 / 2; height: 100%; }
+  .hw-uv > .hw-between { grid-area: 1 / 1; align-items: start; flex-direction: column; }
+}
+
+@container bloom (max-height: 168px) {
+  .hw-hydration { padding-top: 8px; }
+  .hw-hydration .hw-hydration-unit { margin-top: 6px; }
+  .hw-hourly, .hw-sun { gap: 4px; }
+}
+
+@container bloom (min-height: 236px) {
+  .hw-activity-control, .hw-wind-control { max-width: clamp(99px, min(70cqw, 48cqh), 156px); }
+  .hw-air-chart { max-height: 94px; }
+  .hw-weather { justify-content: center; gap: 8px; }
+  .hw-sky { inset-block-start: 50%; transform: translateY(-50%); }
+  .hw-hydration { padding-top: clamp(16px, 12cqh, 42px); }
+  .hw-glucose { align-items: center; }
+}
+
+@container bloom (min-width: 260px) and (min-height: 236px) {
+  .hw-sky { width: min(46cqw, 60cqh); height: auto; }
+  .hw-temperature { font-size: clamp(57px, 24cqh, 86px); }
+}
+
+.bw-frame[data-paused="true"] .hw-step-progress::before,
+.bw-frame[data-paused="true"] :is(.hw-water-fill, .hw-activity-ring, .hw-step-progress-marker, .hw-step-column, .hw-glucose-progress, .hw-uv-marker, .hw-uv-tick, .hw-wind-needle, .hw-weather-backdrop-state, .hw-sun-dusk, .hw-sun-marker) {
+  transition: none;
+}
+.bw-frame[data-reduced="true"] .hw-weather-backdrop-state { transition-delay: 0s; }
+.bw-frame[data-reduced="true"] :is(.hw-water-wave, .hw-heart-trace) { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .bw-frame :is(.hw-water-wave, .hw-heart-trace) { animation: none; }
+  .hw-breathe-surface::before, .hw-breathe-surface::after { animation: none; }
+  .bw-frame .hw-weather-backdrop-state { transition-delay: 0s; }
+}

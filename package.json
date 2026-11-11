@@ -1,0 +1,60 @@
+{
+  "name": "@redheadesign/widgets",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Interactive React widgets and standalone HTML widgets for Telegram bots.",
+  "repository": "github:redheadesign/widgets",
+  "license": "UNLICENSED",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./lib/types/widgets/index.d.ts",
+      "import": "./lib/index.js"
+    },
+    "./style.css": "./lib/style.css",
+    "./telegram": {
+      "types": "./lib/types/telegram.d.ts",
+      "import": "./lib/telegram.js"
+    }
+  },
+  "files": [
+    "lib/",
+    "ATTRIBUTION.md",
+    "docs/library.md",
+    "docs/telegram.md",
+    "licenses/"
+  ],
+  "sideEffects": ["**/*.css"],
+  "scripts": {
+    "dev": "vite --host localhost --port 5173",
+    "build": "tsc --noEmit && vite build",
+    "build:library": "vite build --config vite.library.config.ts && tsc -p tsconfig.library.json",
+    "check:library": "npm run build:library && node scripts/check-library.mjs",
+    "prepack": "npm run build:library",
+    "preview": "vite preview --host localhost",
+    "check:telegram": "node --experimental-strip-types scripts/check-telegram.mjs",
+    "qa:landing": "node scripts/qa-landing.mjs",
+    "qa:widgets": "node --experimental-strip-types scripts/qa-widgets.mjs"
+  },
+  "dependencies": {
+    "lucide-react": "^0.468.0",
+    "motion": "^12.23.24"
+  },
+  "peerDependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@fontsource-variable/inter": "^5.3.0",
+    "@tailwindcss/vite": "^4.1.17",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^4.7.0",
+    "playwright-core": "^1.65.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "tailwindcss": "^4.1.17",
+    "typescript": "~5.9.3",
+    "vite": "^6.4.1"
+  }
+}
