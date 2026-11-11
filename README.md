@@ -67,7 +67,7 @@ npm run dev -- --host 127.0.0.1
 For React 19, install the package from the latest release.
 
 ```sh
-npm install https://github.com/redheadesign/widgets/releases/download/v1.0.3/redheadesign-widgets-1.0.3.tgz
+npm install https://github.com/redheadesign/widgets/releases/download/v1.0.4/redheadesign-widgets-1.0.4.tgz
 ```
 
 To build from `main`, clone the repository and run `npm ci` and `npm pack`. Install the resulting `.tgz` file in your app.

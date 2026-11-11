@@ -7,7 +7,7 @@
 The [complete kit](https://github.com/redheadesign/widgets/releases/latest/download/widgets-kit.zip) contains the React package, 30 Telegram HTML widgets, and setup instructions. To install just the React package, which includes compiled JavaScript, styles, types, and media, run the following command.
 
 ```sh
-npm install https://github.com/redheadesign/widgets/releases/download/v1.0.3/redheadesign-widgets-1.0.3.tgz
+npm install https://github.com/redheadesign/widgets/releases/download/v1.0.4/redheadesign-widgets-1.0.4.tgz
 ```
 
 To install from GitHub source, pin the dependency to a commit SHA.
@@ -19,7 +19,7 @@ npm install 'github:redheadesign/widgets#<commit-sha>'
 To build a local archive, run `npm ci` and `npm pack` in the repository, then install the archive from your app. The filename includes the version from `package.json`.
 
 ```sh
-npm install /path/to/redheadesign-widgets-1.0.3.tgz
+npm install /path/to/redheadesign-widgets-1.0.4.tgz
 ```
 
 ## Use with React
