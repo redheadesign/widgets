@@ -91,25 +91,12 @@ function HeartRate() {
   const [measuring, setMeasuring] = useState(false);
   const { reduce } = useWidgetMotion();
   const tick = usePulse(measuring ? 720 : 2300, measuring || !reduce);
-  const maskId = useId();
-  const fadeId = `${maskId}-fade`;
   const value = HEART_BEATS[tick % HEART_BEATS.length];
   return <WidgetCard title="Heart rate" icon="heart-pulse" aside={<Action compactIcon icon={measuring ? 'pause' : 'activity'} pressed={measuring} onClick={() => setMeasuring(active => !active)}>{measuring ? 'Stop' : 'Measure'}</Action>}>
     <div className="hw-stack hw-heart" data-measuring={measuring}>
       <div className="hw-between hw-heart-top"><div className="hw-number-line"><DotNumber value={value} size={38} label={`${value} beats per minute`} /><span className="bw-unit">bpm</span></div><div className="hw-heart-stats"><div><span>Min</span><strong>58</strong></div><div><span>Max</span><strong>124</strong></div></div></div>
-      <svg className="hw-graphic hw-heart-chart" viewBox="0 0 336 60" preserveAspectRatio="none" aria-hidden="true">
-        <defs>
-          <linearGradient id={fadeId}>
-            <stop offset="0" stopColor="white" stopOpacity=".04" />
-            <stop offset=".18" stopColor="white" />
-            <stop offset=".84" stopColor="white" />
-            <stop offset="1" stopColor="white" stopOpacity=".04" />
-          </linearGradient>
-          <mask id={maskId}><rect width="336" height="60" fill={`url(#${fadeId})`} /></mask>
-        </defs>
-        <g mask={`url(#${maskId})`}>
-          <path className="hw-heart-trace" d={HEART_TRACE} stroke="var(--bw-accent)" strokeWidth="1.5" strokeLinejoin="round" vectorEffect="non-scaling-stroke" fill="none" />
-        </g>
+      <svg className="hw-graphic hw-heart-chart hw-plot-fade" viewBox="0 0 336 60" preserveAspectRatio="none" aria-hidden="true">
+        <path className="hw-heart-trace" d={HEART_TRACE} stroke="var(--bw-accent)" strokeWidth="1.5" strokeLinejoin="round" vectorEffect="non-scaling-stroke" fill="none" />
       </svg>
     </div>
   </WidgetCard>;
@@ -172,12 +159,14 @@ function Sleep() {
       <div className="hw-number-line"><DotNumber value="7:42" size={28} label="7 hours 42 minutes" /><span className="bw-unit">h<span className="hw-sleep-hours"> · 23:10 to 06:52</span></span></div>
       <Scrub label="Sleep stage" max={31} value={selected} valueText={stage} onChange={setSelected}>
         <svg className="hw-graphic" viewBox="0 0 320 58" preserveAspectRatio="none" aria-hidden="true">
-          {STAGE_NAMES.map((name, index) => (
-            <path key={name} d={`M0 ${8 + index * 14} H320`} stroke="#e9e0ff18" strokeDasharray="1 4" />
-          ))}
-          {SLEEP_STAGES.slice(0, -1).map((state, index) => (
-            <path key={index} d={`M${index * 10 + 4.5} ${8 + state * 14} H${index * 10 + 9.5} V${8 + SLEEP_STAGES[index + 1] * 14} H${index * 10 + 14.5}`} stroke="#dad4ff49" fill="none" strokeWidth=".65" />
-          ))}
+          <g className="hw-plot-fade">
+            {STAGE_NAMES.map((name, index) => (
+              <path key={name} d={`M0 ${8 + index * 14} H320`} stroke="#e9e0ff18" strokeDasharray="1 4" />
+            ))}
+            {SLEEP_STAGES.slice(0, -1).map((state, index) => (
+              <path key={index} d={`M${index * 10 + 4.5} ${8 + state * 14} H${index * 10 + 9.5} V${8 + SLEEP_STAGES[index + 1] * 14} H${index * 10 + 14.5}`} stroke="#dad4ff49" fill="none" strokeWidth=".65" />
+            ))}
+          </g>
           {SLEEP_STAGES.map((state, index) => (
             <rect className="hw-sleep-stage" key={index} x={index * 10} y={5.2 + state * 14} width="9" height="5.6" rx="2.8" fill={STAGE_COLORS[state]} opacity={index === selected ? 1 : .78} />
           ))}
@@ -221,7 +210,9 @@ function LungCapacity() {
       <div className="hw-lung-value"><DotNumber value={LUNG_NUMBER.format(value)} size={64} /><span className="bw-muted">Liters</span></div>
       <div className="hw-lung-visual">
         <svg className="hw-graphic" viewBox="0 0 336 103" aria-hidden="true">
-          {LUNG_ARCS.map(arc => <path key={`${arc.center}-${arc.width}`} d={lungArc(arc)} stroke="#f4cce650" strokeWidth=".85" strokeDasharray="1.2 4" fill="none" />)}
+          <g className="hw-plot-fade">
+            {LUNG_ARCS.map(arc => <path key={`${arc.center}-${arc.width}`} d={lungArc(arc)} stroke="#f4cce650" strokeWidth=".85" strokeDasharray="1.2 4" fill="none" />)}
+          </g>
           {running && <path d={lungArc(mainArc)} stroke="#f6bcf0" strokeOpacity=".36" strokeWidth="1.4" fill="none" pathLength="1" strokeDasharray={`${progress} 1`} />}
           <motion.circle cx={markerX} cy={markerY} r="3" fill="white" initial={false} animate={{ opacity: running ? 1 : .95 }} transition={{ duration: duration(.16) }} />
         </svg>
@@ -271,7 +262,7 @@ function Hydration() {
     <WaterSurface glasses={glasses} />
     <div className="hw-stack hw-hydration">
       <div><DotNumber value={milliliters} size={28} label={`${milliliters} milliliters`} /><p className="bw-muted hw-hydration-unit">ml of 2,000</p></div>
-      <div className="hw-between">
+      <div className="hw-hydration-controls">
         <Circle icon="minus" label="Remove a glass of water" disabled={glasses === 0} onClick={() => setGlasses(count => Math.max(0, count - 1))} />
         <span className="hw-caption" aria-live="polite">{glasses} {unit}</span>
         <Circle icon="plus" label="Add a glass of water" disabled={glasses === 12} onClick={() => setGlasses(count => Math.min(12, count + 1))} light />
@@ -288,7 +279,13 @@ function Glucose() {
   const data = GLUCOSE[period];
   return <WidgetCard title="Average glucose" className="hw-glucose-card" aside={<Tabs choices={GLUCOSE_PERIODS} selected={period} onChange={setPeriod} label="Glucose period" />}>
     <div className="hw-between hw-glucose">
-      <div><div className="hw-number-line"><strong className="bw-value hw-glucose-value">{data.amount}</strong><span className="bw-unit">mg/dl</span></div><p className="bw-muted hw-caption">{data.time} · target 70 to 180</p></div>
+      <div>
+        <div className="hw-number-line"><strong className="bw-value hw-glucose-value">{data.amount}</strong><span className="bw-unit">mg/dl</span></div>
+        <p className="bw-muted hw-caption">
+          {data.time} · <span className="hw-glucose-target-long">target 70 to 180</span>
+          <span className="hw-glucose-target-short"><span className="bw-visually-hidden">target 70 to 180</span><span aria-hidden="true">70–180</span></span>
+        </p>
+      </div>
       <div className="hw-glucose-ring"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="48" fill="none" stroke="currentColor" opacity=".28" /><circle className="hw-glucose-progress" cx="50" cy="50" r="48" fill="none" stroke="currentColor" strokeWidth="1.9" pathLength="100" style={{ strokeDasharray: `${data.range} 100` }} transform="rotate(-90 50 50)" /></svg><DotNumber value={`${data.range}%`} size={22} /><span className="hw-caption">in range</span></div>
     </div>
   </WidgetCard>;
@@ -417,7 +414,10 @@ function Hourly() {
       <Scrub label="Hourly forecast" max={HOURLY.length - 1} value={hour} valueText={readout} onChange={setHour}>
         <svg className="hw-graphic" viewBox="0 0 336 82" preserveAspectRatio="none" aria-hidden="true">
           <defs><linearGradient id={gradient} x1="0" x2="0" y1="0" y2="1"><stop stopColor="#f0e7ff" stopOpacity=".2" /><stop offset="1" stopColor="#f0e7ff" stopOpacity="0" /></linearGradient></defs>
-          <path d={`${hourlyPath} V80 H8Z`} fill={`url(#${gradient})`} /><path d={hourlyPath} stroke="#fff" strokeWidth="1.5" fill="none" />
+          <g className="hw-plot-fade">
+            <path d={`${hourlyPath} V80 H8Z`} fill={`url(#${gradient})`} />
+            <path d={hourlyPath} stroke="#fff" strokeWidth="1.5" vectorEffect="non-scaling-stroke" fill="none" />
+          </g>
           {HOURLY.map(({ rain }, index) => (
             <rect className="hw-hourly-rain" key={index} x={hourlyX(index) - 1.5} y={79 - rain * .29} width="3" height={rain * .29} rx="1.5" fill={index === hour ? '#c3c8ff' : '#9197d289'} />
           ))}
@@ -443,7 +443,9 @@ function AirQuality() {
   return <WidgetCard title="Air quality" icon="leaf">
     <div className="hw-stack hw-air">
       <svg className="hw-graphic hw-air-chart" viewBox="-6 -4 132 38" aria-hidden="true">
-        <motion.path initial={false} animate={{ d: pollutant.line }} transition={{ duration: duration(.24), ease: 'easeOut' }} fill="none" stroke="white" strokeWidth="1.3" />
+        <g className="hw-plot-fade">
+          <motion.path initial={false} animate={{ d: pollutant.line }} transition={{ duration: duration(.24), ease: 'easeOut' }} fill="none" stroke="white" strokeWidth="1.3" />
+        </g>
         <motion.circle initial={false} animate={{ cx: pollutant.x, cy: pollutant.y }} transition={{ duration: duration(.24), ease: 'easeOut' }} r="3.2" fill="var(--bw-accent)" />
       </svg>
       <DotNumber value={pollutant.index} size={28} />
@@ -522,7 +524,7 @@ function SunPath() {
       <div className="hw-sun-dusk" aria-hidden="true" />
       <Scrub label="Time of day" min={SUNRISE} max={SUNSET} value={minutes} valueText={readout} onChange={setMinutes}>
         <div className="hw-sun-ground" aria-hidden="true" />
-        <svg className="hw-graphic" viewBox="0 0 336 87" preserveAspectRatio="none" aria-hidden="true">
+        <svg className="hw-graphic hw-plot-fade" viewBox="0 0 336 87" preserveAspectRatio="none" aria-hidden="true">
           <path d="M27 69 Q168 -47 309 69" fill="none" stroke="#ffe1a07a" strokeDasharray="2 4" vectorEffect="non-scaling-stroke" />
         </svg>
         <span className="hw-sun-marker" aria-hidden="true" style={{ left: `${sunX * 100}%`, top: `${sunY * 100}%` }} />

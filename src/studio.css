@@ -196,7 +196,6 @@ svg { flex-shrink: 0; vertical-align: middle; }
 .switch-track span { display: block; background: #f4f0fc; width: 14px; height: 14px; border-radius: 50%; transition: translate 150ms; }
 .toggle-row[aria-checked="true"] .switch-track { background: #7e61ce; }
 .toggle-row[aria-checked="true"] .switch-track span { translate: 13px 0; }
-.field-help { margin-top: 5px; color: var(--dim); font-size: 11px; line-height: 1.55; }
 .frame-review { margin-top: 12px; border: 1px solid var(--hairline); border-radius: 8px; background: var(--surface); }
 .frame-review summary { padding: 8px; color: var(--muted); font-size: 12px; cursor: pointer; }
 .frame-review summary:focus-visible { outline: 2px solid var(--lilac); outline-offset: 2px; }
@@ -268,7 +267,7 @@ svg { flex-shrink: 0; vertical-align: middle; }
   .inspector { height: auto; position: static; border-left: 0; border-top: 1px solid var(--hairline); }
   .inspector-title, .inspector-section { padding-inline: 13px; }
   .mobile-library select, .select-row select, .embed-code { font-size: 16px; }
-  .inspector-section > :is(.select-row, .range-row, .speed-select, .toggle-row, .field-help) { max-width: 340px; }
+  .inspector-section > :is(.select-row, .range-row, .speed-select, .toggle-row) { max-width: 340px; }
   .gallery-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 }
 @media (max-width: 370px) { .wordmark > span { display: none; } }

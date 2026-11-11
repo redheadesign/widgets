@@ -22,11 +22,10 @@ const browser = await chromium.launch({
   ...(process.env.BLOOM_BROWSER_PATH ? { executablePath: process.env.BLOOM_BROWSER_PATH } : { channel: 'msedge' }),
 });
 try {
-  const page = await browser.newPage({ colorScheme: 'dark', reducedMotion: 'reduce', viewport: { width: 1440, height: 960 } });
+  const page = await browser.newPage({ colorScheme: 'light', reducedMotion: 'reduce', viewport: { width: 1440, height: 960 } });
   page.on('pageerror', error => issues.add(error.message));
   await page.route('https://api.github.com/repos/redheadesign/widgets', route => route.fulfill({ json: { stargazers_count: 17 } }));
-  const grid = page.getByRole('main', { name: 'Виджеты' });
-  const theme = page.getByRole('switch', { name: 'Тёмная тема' });
+  const grid = page.getByRole('main', { name: 'Виджеты' }).locator('.bento-grid');
   const nav = page.getByRole('navigation', { name: 'Категории виджетов' });
   const filter = label => nav.getByRole('button', { name: label, exact: true });
 
@@ -35,7 +34,7 @@ try {
       const grid = document.querySelector('.bento-grid');
       if (!grid || grid.children.length !== count) return false;
       const gap = Number.parseFloat(getComputedStyle(grid).columnGap);
-      const columns = Math.min(5, Math.max(1, Math.floor((grid.clientWidth + gap) / (160 + gap))));
+      const columns = Math.min(5, Math.max(1, Math.floor((grid.parentElement.clientWidth + gap) / (160 + gap))));
       return Number(grid.style.getPropertyValue('--bento-columns')) === Math.min(count, columns);
     }, expected.length);
     const data = await grid.evaluate(element => {
@@ -44,9 +43,12 @@ try {
       const rows = style.gridTemplateRows.split(' ').map(Number.parseFloat);
       const gap = Number.parseFloat(style.columnGap);
       const origin = element.getBoundingClientRect();
+      const stage = element.parentElement.getBoundingClientRect();
       const cells = new Set();
       const defects = [];
       if (rows.some(row => Math.abs(row - cols[0]) > 1)) defects.push('base cells are not square');
+      if (cols.some(col => col > 176.1)) defects.push('a module exceeded the original 176 px');
+      if (Math.abs((stage.left + stage.right - origin.left - origin.right) / 2) > 1) defects.push('grid is not centered');
       const offsets = lengths => lengths.map((_, i) => lengths.slice(0, i).reduce((sum, size) => sum + size + gap, 0));
       const xs = offsets(cols);
       const ys = offsets(rows);
@@ -148,6 +150,8 @@ try {
 
   await page.goto(url.href);
   assert.equal(await filter('Все').getAttribute('aria-pressed'), 'true');
+  assert.equal(await page.locator('.bento-page').evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(0, 0, 0)');
+  assert.equal(await page.locator('.bento-header').getByRole('switch').count(), 0);
   await page.getByRole('link', { name: /GitHub, звёзд: 17/ }).waitFor();
   assert.equal(await page.getByRole('link', { name: /GitHub/ }).getAttribute('href'), 'https://github.com/redheadesign/widgets');
   assert.equal(await page.getByRole('link', { name: /Telegram/ }).getAttribute('href'), 'https://t.me/redheadesign');
@@ -192,22 +196,15 @@ try {
   for (const color of ['tint', 'accent']) {
     assert.deepEqual(colors(before.tiles, color), colors(initial.tiles, color), 'Resize changes assigned ' + color);
   }
-  assert.equal(await theme.getAttribute('aria-checked'), 'true');
-  await theme.click();
-  await page.waitForFunction(() => document.querySelector('.bento-page')?.dataset.theme === 'light');
   await page.reload();
-  assert.equal(await theme.getAttribute('aria-checked'), 'false');
   const after = await measure(all, '1440px · after reload');
   assert.notDeepEqual(after.tiles.map(tile => tile.id), before.tiles.map(tile => tile.id), 'Reload keeps order');
   assert.notDeepEqual(after.tiles.map(tile => tile.layout), before.tiles.map(tile => tile.layout), 'Reload keeps grid layout');
   for (const color of ['tint', 'accent']) {
     assert(after.tiles.every(tile => tile[color]), 'Missing ' + color);
     assert.notDeepEqual(colors(after.tiles, color), colors(before.tiles, color), 'Reload keeps ' + color + ' colors');
+    assert.equal(colors(after.tiles, color).hydration, colors(before.tiles, color).hydration, 'Hydration should retain its blue palette');
   }
-  await theme.press('Space');
-  await page.waitForFunction(() => document.querySelector('.bento-page')?.dataset.theme === 'dark');
-  await page.reload();
-  assert.equal(await theme.getAttribute('aria-checked'), 'true');
   assert.equal(await filter('Все').getAttribute('aria-pressed'), 'true');
 
   await page.addInitScript(() => {
@@ -246,7 +243,7 @@ try {
       const readout = bounds('.ah-timer-main');
       const chart = bounds('.ah-timer-chart');
       return {
-        centered: Math.abs((readout.top + chart.bottom - body.top - body.bottom) / 2) <= 2,
+        pinned: Math.abs(chart.bottom - body.bottom) <= 2,
         gap: chart.top - readout.bottom,
         controlsFit: [...frame.querySelectorAll('button')].every(button => {
           const rect = button.getBoundingClientRect();
@@ -255,7 +252,7 @@ try {
       };
     });
     const dimensions = width + 'x' + height;
-    assert(sizes.centered && sizes.controlsFit && sizes.gap >= 12 && sizes.gap <= 26, dimensions + ' · ' + JSON.stringify(sizes));
+    assert(sizes.pinned && sizes.controlsFit && sizes.gap >= 12, dimensions + ' · ' + JSON.stringify(sizes));
     await timer.screenshot({ path: fileURLToPath(new URL('timer-centered-' + dimensions + '.png', output)) });
     await timer.getByRole('button', { name: 'Add one minute' }).click();
     assert(await timer.getByRole('img', { name: '17:00' }).isVisible());
@@ -266,7 +263,7 @@ try {
     assert(await timer.getByRole('img', { name: '16:00' }).isVisible());
   }
   assert.equal(issues.size, 0, [...issues].join('\n'));
-  console.log('Landing passes layout, filters, keyboard, hydration, timer, theme persistence, and reload variation.');
+  console.log('Landing passes fixed-size layout, filters, keyboard, hydration, timer, dark theme and reload variation.');
 } finally {
   await browser.close();
 }

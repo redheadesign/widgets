@@ -35,9 +35,9 @@ export const tones = {
 
 const toneSurfaces: Record<Tone, string> = {
   red: 'heart-rate', graphite: 'clock', pink: 'lung-capacity', rose: 'breathing',
-  blue: 'weather-madrid', indigo: 'sleep', violet: 'revenue', olive: 'air-quality',
+  blue: 'hydration', indigo: 'sleep', violet: 'revenue', olive: 'air-quality',
   ember: 'uv-index', amber: 'sun', green: 'thermostat', cyan: 'thermostat', teal: 'wind', plum: 'glucose',
-  azure: 'thermostat', cobalt: 'thermostat', mint: 'thermostat', orchid: 'revenue', coral: 'uv-index', smoke: 'lock', slate: 'weather-madrid',
+  azure: 'thermostat', cobalt: 'thermostat', mint: 'thermostat', orchid: 'revenue', coral: 'uv-index', smoke: 'lock', slate: 'weather-tokyo',
 };
 const toneSurfaceFilters: Partial<Record<Tone, string>> = {
   cyan: 'hue-rotate(42deg)', azure: 'hue-rotate(78deg)', cobalt: 'hue-rotate(113deg)',

@@ -346,7 +346,7 @@ async function checkBento() {
     await repeat.click();
     assert(await card.getByRole('button', { name: 'Stop' }).isVisible(), 'Resized iframe must stay interactive');
 
-    studio.search = '?presentation=1';
+    studio.search = '?view=gallery';
     for (const width of [1280, 320]) {
       await tab.setViewportSize({ width, height: 800 });
       await tab.goto(studio.href, { waitUntil: 'domcontentloaded' });

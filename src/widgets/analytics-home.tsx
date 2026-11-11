@@ -131,11 +131,12 @@ const revenueData = [
 export function RevenueWidget() {
   const [period, setPeriod] = useState(0);
   const [active, setActive] = useState(revenueData[0].selected);
-  const gridGradient = useId();
   const hasChangedPeriod = useRef(false);
   const transition = useTransition(0.27);
   const draw = hasChangedPeriod.current && transition.duration > 0;
   const data = revenueData[period];
+  const label = data.names[active];
+  const compactLabel = period === 2 ? label.split('–').map(month => month.slice(0, 3)).join('–') : label.replace(' (in progress)', '');
   const max = Math.max(...data.amounts);
   const span = 336 / data.amounts.length;
   const points = data.amounts.map((value, index) => [span * (index + 0.5), 178 - (value / max) * 152] as const);
@@ -154,15 +155,15 @@ export function RevenueWidget() {
         <span className="bw-value ah-revenue-value">{money.format(data.amounts.reduce((sum, value) => sum + value, 0))}</span>
         <span className="ah-positive"><Icon name="arrow-up-right" size={11} />{decimals.format(data.change)}%</span>
       </motion.div>
-      <div className="bw-muted ah-revenue-caption">{data.names[active]} · {compactMoney.format(data.amounts[active]).toLocaleLowerCase('en-US')}</div>
+      <div className="bw-muted ah-revenue-caption">
+        <span className="ah-revenue-caption-long">{label}</span><span className="ah-revenue-caption-short">{compactLabel}</span> · {compactMoney.format(data.amounts[active]).toLocaleLowerCase('en-US')}
+      </div>
       <div className="ah-revenue-chart">
         <div className="ah-revenue-plot">
           <svg viewBox="0 0 336 178" preserveAspectRatio="none" aria-hidden="true" className="ah-fill-svg">
-            <defs><linearGradient id={gridGradient} gradientUnits="userSpaceOnUse" x2="336" y2="0">
-              <stop stopColor="white" stopOpacity="0" /><stop offset=".08" stopColor="white" stopOpacity=".14" />
-              <stop offset=".92" stopColor="white" stopOpacity=".14" /><stop offset="1" stopColor="white" stopOpacity="0" />
-            </linearGradient></defs>
-            <path d="M0 92h336M0 135h336" stroke={`url(#${gridGradient})`} strokeDasharray=".7 5" />
+            <g className="ah-chart-fade">
+              <path d="M0 92h336M0 135h336" stroke="white" strokeOpacity=".14" strokeDasharray=".7 5" />
+            </g>
             {points.map(([x, y], index) => (
               <motion.rect key={`${period}-${index}`} x={x - 15} y={y} height={178 - y} width="30" rx="15"
                 style={{ transformBox: 'fill-box', originX: '50%', originY: '100%' }} initial={draw ? { scaleY: 0.15 } : false}
@@ -199,6 +200,14 @@ export function UsersWidget() {
   const live = running && !paused;
   const active = 1300 + userVariation[tick % userVariation.length];
   const transition = useTransition();
+  const columns = userHistory.map((height, index) => {
+    const count = clamp(height + (tick > 0 && index > 8 ? (tick + index) % 3 - 1 : 0), 1, 5);
+    const latest = index === userHistory.length - 1;
+    return Array.from({ length: 5 }, (_, step) => (
+      <motion.rect key={`${index}-${step}`} x={index * 10.6} y={23 - step * 4.8} width="6.2" height="2.9" rx="1.25"
+        fill={latest ? accent : 'white'} initial={false} animate={{ opacity: step < count ? (latest ? 1 : 0.28 + index / 25) : 0 }} transition={transition} />
+    ));
+  });
   return (
     <WidgetCard title="Users" icon="users" aside={
       <Press className="ah-live" aria-label={running ? 'Pause live users' : 'Resume live users'} aria-pressed={running} onClick={() => setRunning((value) => !value)}>
@@ -207,13 +216,8 @@ export function UsersWidget() {
     }>
       <div className="ah-user-value"><DotNumber value={integers.format(active)} size={30} /><div className="bw-muted">active now</div></div>
       <svg viewBox="0 0 146 26" preserveAspectRatio="none" className="ah-user-chart" aria-hidden="true">
-        {userHistory.map((height, index) => {
-          const count = clamp(height + (tick > 0 && index > 8 ? (tick + index) % 3 - 1 : 0), 1, 5);
-          return Array.from({ length: 5 }, (_, step) => (
-            <motion.rect key={`${index}-${step}`} x={index * 10.6} y={23 - step * 4.8} width="6.2" height="2.9" rx="1.25"
-              fill={index === userHistory.length - 1 ? accent : 'white'} initial={false} animate={{ opacity: step < count ? (index === userHistory.length - 1 ? 1 : 0.28 + index / 25) : 0 }} transition={transition} />
-          ));
-        })}
+        <g className="ah-chart-fade">{columns.slice(0, -1)}</g>
+        {columns.at(-1)}
       </svg>
     </WidgetCard>
   );
@@ -225,7 +229,8 @@ export function FunnelWidget() {
   const [selected, select] = useState(3);
   const ratio = (funnel[selected].value / funnel[0].value) * 100;
   return (
-    <WidgetCard title="Conversion funnel" icon="filter" aside={<span className="bw-muted">{selected === 3 ? 'Conv.' : funnel[selected].title} {decimals.format(ratio)}%</span>}>
+    <WidgetCard title={<><span className="ah-funnel-title-long">Conversion funnel</span><span className="ah-funnel-title-short">Funnel</span></>}
+      icon="filter" aside={<span className="bw-muted">{selected === 3 ? 'Conv.' : funnel[selected].title} {decimals.format(ratio)}%</span>}>
       <div className="ah-funnel" role="group" aria-label="Funnel stages" onKeyDown={moveSelection}>
         {funnel.map(({ title, value }, index) => (
           <Press className="ah-funnel-row" key={title} aria-pressed={selected === index} tabIndex={selected === index ? 0 : -1}
@@ -256,6 +261,7 @@ export function TrafficWidget() {
       <div className="ah-traffic">
         <div className="ah-donut" aria-label={`${channel.title} ${channel.value}%`}>
           <svg viewBox="0 0 96 96" aria-hidden="true" className="ah-fill-svg">
+            <g className="ah-chart-fade"><circle cx="48" cy="48" r="40" fill="none" stroke="white" strokeOpacity=".06" strokeWidth="8" /></g>
             {channels.map(({ title, value, color }, index) => {
               const circumference = Math.PI * 80;
               const offset = channels.slice(0, index).reduce((sum, item) => sum + item.value, 0);
@@ -309,7 +315,7 @@ export function GoalWidget() {
       <div className="ah-goal">
         <svg viewBox="0 0 200 111" aria-hidden="true" className="ah-goal-svg">
           <defs><linearGradient id={gradient} gradientUnits="userSpaceOnUse" x1="16" x2="172" y1="0" y2="0"><stop stopColor="#3977f4" /><stop offset=".53" stopColor="#84d4f9" /><stop offset=".76" stopColor="#ffc669" /><stop offset="1" stopColor="#ff713e" /></linearGradient></defs>
-          <path d={arc} fill="none" stroke="white" strokeOpacity=".12" strokeWidth="22" strokeLinecap="round" />
+          <g className="ah-chart-fade"><path d={arc} fill="none" stroke="white" strokeOpacity=".12" strokeWidth="22" strokeLinecap="round" /></g>
           <motion.path d={arc} fill="none" stroke={`url(#${gradient})`} strokeWidth="22" strokeLinecap="round" pathLength={arcLength} opacity={arcOpacity} />
           <motion.circle cx={knobX} cy={knobY} r="13" fill="white" />
         </svg>
@@ -449,6 +455,10 @@ export function LightsWidget() {
 
 const energyData = [0.67, 0.53, 0.39, 0.39, 0.46, 0.8, 1.5, 2.13, 1.78, 1.29, 1.08, 1.22, 1.5, 1.36, 1.22, 1.29, 1.71, 2.27, 2.89, 3.1, 2.54, 1.92, 1.29, 0.87];
 const energyValue = new Intl.NumberFormat('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const energyBars = energyData.map((amount, index) => {
+  const height = (amount + 0.17) / 0.0696;
+  return { x: index * (140 / 23), y: 53 - height, height };
+});
 
 export function EnergyWidget() {
   const [hour, setHour] = useState(19);
@@ -459,11 +469,10 @@ export function EnergyWidget() {
         <div className="ah-value-row"><DotNumber value={energyValue.format(energyData[hour])} size={30} /><span className="bw-muted">kWh</span></div>
         <div className="ah-energy-plot">
           <svg viewBox="0 0 144 53" className="ah-fill-svg" preserveAspectRatio="none" aria-hidden="true">
-            {energyData.map((amount, index) => {
-              const height = (amount + 0.17) / 0.0696;
-              return <motion.rect key={index} x={index * (140 / 23)} y={53 - height} width="4" height={height} rx="1.8" initial={false}
-                animate={{ opacity: hour === index ? 1 : 0.36 }} transition={transition} fill={hour === index ? accent : 'white'} />;
-            })}
+            <g className="ah-chart-fade">
+              {energyBars.map(bar => <rect key={bar.x} {...bar} width="4" rx="1.8" fill="white" fillOpacity=".36" />)}
+            </g>
+            <motion.rect initial={false} animate={energyBars[hour]} transition={transition} width="4" rx="1.8" fill={accent} />
           </svg>
           <ScrubRange hover value={hour} max={23} label="Energy usage by hour" valueText={`${clockFormat.format(hour)}:00, ${energyValue.format(energyData[hour])} kilowatt hours`}
             onValue={setHour} />
@@ -526,10 +535,12 @@ export function TimerWidget() {
         </div>
       </div>
       <svg viewBox="0 0 336 40" preserveAspectRatio="none" className="ah-timer-chart" aria-hidden="true">
-        {timerTicks.map((height, index) => (
-          <motion.rect key={index} x={index * (334 / 47)} y={40 - height} width="1.55" height={height} rx=".775" fill="white"
-            initial={false} animate={{ opacity: index <= playhead ? 0.68 : 0.2 }} transition={transition} />
-        ))}
+        <g className="ah-chart-fade">
+          {timerTicks.map((height, index) => (
+            <motion.rect key={index} x={index * (334 / 47)} y={40 - height} width="1.55" height={height} rx=".775" fill="white"
+              initial={false} animate={{ opacity: index <= playhead ? 0.68 : 0.2 }} transition={transition} />
+          ))}
+        </g>
         <motion.rect width="2" rx="1" fill={accent} initial={false} transition={transition}
           animate={{ x: playhead * (334 / 47), y: 40 - markerHeight, height: markerHeight }} />
       </svg>
@@ -685,7 +696,12 @@ export function CalendarWidget() {
   );
 }
 
-const tasks = ['Send revised proposal', 'Pay the hosting invoice', 'Buy coffee beans', 'Call the dentist'];
+const tasks = [
+  { title: 'Send revised proposal', compact: 'Send proposal' },
+  { title: 'Pay the hosting invoice', compact: 'Pay hosting' },
+  { title: 'Buy coffee beans', compact: 'Buy coffee beans' },
+  { title: 'Call the dentist', compact: 'Call the dentist' },
+];
 
 export function RemindersWidget() {
   const [completed, setCompleted] = useState([false, false, true, false]);
@@ -701,9 +717,11 @@ export function RemindersWidget() {
       </span>
     }>
       <div className="ah-reminders" role="group" aria-label="Reminder checklist">
-        {tasks.map((task, index) => (
-          <Press key={task} role="checkbox" aria-checked={completed[index]} onClick={() => setCompleted((previous) => previous.map((done, at) => at === index ? !done : done))}>
-            <span className="ah-check"><Icon name="check" size={11} /></span><span className="ah-task">{task}</span>
+        {tasks.map(({ title, compact }, index) => (
+          <Press key={title} role="checkbox" aria-label={title} aria-checked={completed[index]} onClick={() => setCompleted((previous) => previous.map((done, at) => at === index ? !done : done))}>
+            <span className="ah-check"><Icon name="check" size={11} /></span><span className="ah-task">
+              <span className="ah-task-long">{title}</span><span className="ah-task-short">{compact}</span>
+            </span>
           </Press>
         ))}
       </div>
@@ -728,6 +746,8 @@ export function MusicWidget() {
   const transition = useTransition(0.18);
   const playbackSpeed = Math.max(0.25, speed);
   const playbackProgress = position / duration;
+  const playhead = clamp(Math.floor(playbackProgress * amplitudes.length), 0, amplitudes.length - 1);
+  const playheadHeight = amplitudes[playhead];
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -791,7 +811,7 @@ export function MusicWidget() {
   }
 
   return (
-    <WidgetCard title="Now playing" aside={<span className="bw-muted">{trackIndex + 1} / {musicTracks.length}</span>}>
+    <WidgetCard className="ah-music-card" title="Now playing" aside={<span className="bw-muted">{trackIndex + 1} / {musicTracks.length}</span>}>
       <span hidden ref={sourceRef} className="ah-audio-source" />
       <audio ref={audioRef} preload="none"
         onLoadedMetadata={event => {
@@ -828,13 +848,16 @@ export function MusicWidget() {
       </div>
       <div className="ah-wave" style={{ '--ah-note-period': `${0.45 / playbackSpeed}s` } as CSSProperties}>
         <svg viewBox="0 0 336 26" preserveAspectRatio="none" className="ah-fill-svg" aria-hidden="true">
-          {amplitudes.map((amount, index) => {
-            const current = index / amplitudes.length <= playbackProgress;
-            return <motion.rect key={index} x={index * (331 / 39)} y={(26 - amount) / 2} height={amount} width="5" rx="2.5" fill="white"
+          <g className="ah-chart-fade">
+            {amplitudes.map((amount, index) => (
+              <motion.rect key={index} x={index * (331 / 39)} y={(26 - amount) / 2} height={amount} width="5" rx="2.5" fill="white"
               className="ah-wave-bar" data-sounding={active && Math.abs(index - playbackProgress * (amplitudes.length - 1)) < 3}
               style={{ '--ah-beat-offset': `${index % 4 * -0.065}s` } as CSSProperties}
-              initial={false} animate={{ opacity: current ? 1 : 0.26 }} transition={transition} />;
-          })}
+                initial={false} animate={{ opacity: index <= playhead ? 1 : 0.26 }} transition={transition} />
+            ))}
+          </g>
+          <rect x={playhead * (331 / 39)} y={(26 - playheadHeight) / 2} height={playheadHeight} width="5" rx="2.5" fill="white"
+            className="ah-wave-bar" data-sounding={active} style={{ '--ah-beat-offset': `${playhead % 4 * -0.065}s` } as CSSProperties} />
         </svg>
         <ScrubRange value={position} max={duration} label="Seek track" valueText={durationLabel(position)} onValue={seek} />
       </div>
@@ -855,23 +878,25 @@ export function StocksWidget() {
   const hasSwitched = useRef(false);
   const asset = assets[assetIndex];
   const gradient = useId();
-  const edgeMask = useId();
   const transition = useTransition(0.22);
   const points = asset.history.map((value, index) => [index * (144 / (asset.history.length - 1)), value] as const);
   const curve = smoothPath(points);
   const picked = at ?? points.length - 1;
   const price = Math.round(asset.base + (asset.history.at(-1)! - asset.history[picked]) * asset.base / 1600);
   return (
-    <WidgetCard title={asset.code} aside={<Press className="ah-symbol" onClick={() => { hasSwitched.current = true; select(1 - assetIndex); setAt(null); }}
+    <WidgetCard className="ah-stock-card" title={asset.code} aside={<Press className="ah-symbol" onClick={() => { hasSwitched.current = true; select(1 - assetIndex); setAt(null); }}
       aria-label={`Show ${assets[1 - assetIndex].code}`}>{assets[1 - assetIndex].code}<Icon name="chevron-right" size={10} /></Press>}>
+      <motion.div key={asset.code} className="ah-price" initial={hasSwitched.current ? { opacity: 0.45, y: 3 } : false}
+        animate={{ opacity: 1, y: 0 }} transition={transition}>
+        <div className="bw-value">{money.format(price)}</div>
+        <div className="bw-muted"><Icon name={asset.change > 0 ? 'arrow-up-right' : 'arrow-down-right'} size={12} />{signedPercent.format(asset.change / 100).replace(/^-/, '−')} · 24 h</div>
+      </motion.div>
       <div className="ah-stock-plot">
         <svg viewBox="0 0 144 48" preserveAspectRatio="none" className="ah-fill-svg" aria-hidden="true">
           <defs>
             <linearGradient id={gradient} x1="0" y1="0" x2="0" y2="1"><stop stopColor="white" stopOpacity=".17"/><stop offset="1" stopColor="white" stopOpacity="0"/></linearGradient>
-            <linearGradient id={`${edgeMask}-fade`}><stop stopColor="white" stopOpacity="0" /><stop offset=".12" stopColor="white" /><stop offset=".88" stopColor="white" /><stop offset="1" stopColor="white" stopOpacity="0" /></linearGradient>
-            <mask id={edgeMask} maskUnits="userSpaceOnUse" x="0" y="0" width="144" height="48"><rect width="144" height="48" fill={`url(#${edgeMask}-fade)`} /></mask>
           </defs>
-          <path d={`${curve}L144 48H0Z`} fill={`url(#${gradient})`} mask={`url(#${edgeMask})`} />
+          <g className="ah-chart-fade"><path d={`${curve}L144 48H0Z`} fill={`url(#${gradient})`} /></g>
           <motion.path key={asset.code} d={curve} initial={hasSwitched.current ? { opacity: 0.38 } : false}
             animate={{ opacity: 1 }} transition={transition} stroke="white" strokeWidth="1.4" strokeLinecap="round" vectorEffect="non-scaling-stroke" fill="none" />
           {at !== null && <>
@@ -881,11 +906,6 @@ export function StocksWidget() {
         </svg>
         <ScrubRange hover value={picked} max={points.length - 1} label={`${asset.code} price history`} valueText={money.format(price)} onValue={setAt} />
       </div>
-      <motion.div key={asset.code} className="ah-price" initial={hasSwitched.current ? { opacity: 0.45, y: 3 } : false}
-        animate={{ opacity: 1, y: 0 }} transition={transition}>
-        <div className="bw-value">{money.format(price)}</div>
-        <div className="bw-muted"><Icon name={asset.change > 0 ? 'arrow-up-right' : 'arrow-down-right'} size={12} />{signedPercent.format(asset.change / 100).replace(/^-/, '−')} · 24 h</div>
-      </motion.div>
     </WidgetCard>
   );
 }

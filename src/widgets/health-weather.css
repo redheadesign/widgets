@@ -6,7 +6,8 @@
 .hw-white { color: var(--bw-white); }
 .hw-stack p, .hw-between p { margin: 0; }
 .hw-graphic { display: block; width: 100%; min-height: 0; }
-.hw-action { padding-right: 4px; }
+.bw-action.hw-action { padding-inline: 10px 4px; }
+.hw-action-label, .hw-tabs button { line-height: 1.2; }
 .hw-action-icon { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: #fff; color: #17131a; flex: none; }
 .hw-circle.hw-circle--light { background: #fff; color: #17131a; }
 .hw-scrub { --hw-scrub-inset: 0%; position: relative; min-height: 0; display: flex; flex: 1; border-radius: 6px; }
@@ -31,15 +32,18 @@
 .hw-scrub-halo { opacity: 0; transition: opacity calc(.16s / var(--bw-speed)) ease-out; }
 .hw-scrub:has(input:is(:active, :focus-visible)) .hw-scrub-halo { opacity: .7; }
 
-:is(.hw-heart, .hw-sleep, .hw-hourly, .hw-sun) { justify-content: center; }
+.hw-plot-fade { mask-origin: view-box; mask-clip: view-box; }
+.hw-plot-fade, .hw-step-progress::before, .hw-step-progress::after, .hw-sun-ground {
+  mask-image: var(--bw-chart-edge-fade);
+}
 .hw-heart .hw-heart-chart, :is(.hw-sleep, .hw-hourly, .hw-sun) .hw-scrub {
   flex: 0 1 auto;
   width: 100%;
   height: auto;
   aspect-ratio: var(--hw-chart-aspect);
 }
-.hw-heart-chart { --hw-chart-aspect: 336 / 60; }
-.hw-sleep .hw-scrub { --hw-chart-aspect: 320 / 58; }
+.hw-heart-chart { --hw-chart-aspect: 336 / 60; margin-top: auto; }
+.hw-sleep .hw-scrub { --hw-chart-aspect: 320 / 58; margin-top: auto; }
 .hw-hourly .hw-scrub { --hw-chart-aspect: 336 / 82; }
 .hw-sun .hw-scrub { --hw-chart-aspect: 336 / 87; }
 
@@ -73,20 +77,23 @@
 .hw-step-progress {
   --hw-step-dot: radial-gradient(circle at 2px 2px, currentColor 1.1px, transparent 1.35px) repeat-x 0 0 / 6px 4px;
   position: relative;
+  isolation: isolate;
   height: 4px;
   margin-top: 16px;
   margin-bottom: 4px;
   max-width: 160px;
   color: #fff4;
-  background: var(--hw-step-dot);
 }
-.hw-step-progress::before {
+.hw-step-progress::before, .hw-step-progress::after {
   position: absolute;
   inset: 0;
   content: "";
+  background: var(--hw-step-dot);
+}
+.hw-step-progress::after { z-index: -1; }
+.hw-step-progress::before {
   clip-path: inset(0 calc(100% - var(--hw-step-progress)) 0 0);
   color: #fff;
-  background: var(--hw-step-dot);
   transition: clip-path calc(.26s / var(--bw-speed)) ease-out;
 }
 .hw-step-progress-marker {
@@ -159,10 +166,17 @@
   /* ai-design-check-ignore-next-line spacing-scale -- Measured unit position in the Hydration reference. */
   margin-top: 10px;
 }
-.hw-hydration .hw-caption { font-variant-numeric: tabular-nums; }
+.hw-hydration-controls {
+  display: flex;
+  align-self: center;
+  align-items: center;
+  gap: clamp(4px, 2cqw, 8px);
+}
+.hw-hydration-controls .hw-caption { min-width: 50px; text-align: center; font-variant-numeric: tabular-nums; }
 
 .hw-glucose { height: 100%; align-items: end; }
 .hw-glucose .bw-muted { margin-top: 8px; }
+.hw-glucose-target-short { display: none; }
 .hw-glucose-value { font-size: 39px; font-weight: 300; }
 .hw-glucose-ring { width: 86px; height: 86px; flex: 0 0 86px; align-self: center; display: grid; grid-template-rows: auto auto; justify-content: center; align-content: center; justify-items: center; gap: 4px; color: var(--bw-accent); position: relative; margin-right: 8px; }
 .hw-glucose-ring > svg:first-child { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -240,7 +254,7 @@
 .hw-sky--rain .hw-sky-cloud { transform: translateY(-12px); opacity: .8; }
 .hw-sky-rain { opacity: .35; }
 
-.hw-hourly, .hw-sun { gap: 8px; }
+.hw-hourly, .hw-sun { justify-content: flex-end; gap: 8px; }
 .hw-hourly .hw-scrub { --hw-scrub-inset: 2.38%; margin-top: 12px; }
 .hw-air { align-items: flex-start; justify-content: space-between; }
 .hw-air-chart { flex: 1; max-height: 44px; margin-top: 4px; }
@@ -252,7 +266,19 @@
 .hw-uv-marker, .hw-wind-needle { transform-box: view-box; transition: rotate calc(.28s / var(--bw-speed)) ease-out; }
 .hw-uv-marker { transform-origin: 72px 57px; }
 .hw-uv-tick { transition: opacity calc(.25s / var(--bw-speed)) ease-out, r calc(.25s / var(--bw-speed)) ease-out; }
-.bw-frame .hw-chip { border: 0; border-radius: 999px; background: #0004; padding: 4px 8px; min-height: 24px; font-size: 11px; color: var(--bw-white); }
+.bw-frame .hw-chip {
+  display: inline-grid;
+  place-items: center;
+  min-width: 40px;
+  min-height: 24px;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 999px;
+  background: #0004;
+  color: var(--bw-white);
+  font-size: 11px;
+  line-height: 1.2;
+}
 
 .hw-wind { align-items: center; justify-content: space-between; gap: 4px; }
 .hw-wind-control {
@@ -285,7 +311,6 @@
   position: absolute;
   inset: 79.31% 2.38% 0;
   background: linear-gradient(transparent, #180f045c 40%, transparent);
-  mask-image: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent);
   pointer-events: none;
 }
 .hw-sun-ground::before {
@@ -346,18 +371,17 @@
   .hw-heart-top .bw-dot-number { width: auto; height: 32px; }
   .hw-heart-stats { gap: 8px; }
 
-  .hw-steps { display: grid; grid-template-rows: auto auto; align-content: center; }
+  .hw-steps { display: grid; grid-template: auto auto / minmax(0, 1fr); align-content: space-between; gap: 6px; }
   .hw-steps-readout {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 4px;
-    align-items: center;
+    justify-items: start;
   }
-  .hw-steps-readout .bw-dot-number { width: 100%; height: auto; max-height: 26px; }
+  .hw-steps-readout .bw-dot-number { width: auto; height: 28px; }
   .hw-steps-readout p { margin: 0; font-size: 11px; }
   .hw-step-streak-long { display: none; }
   .hw-step-streak-short { display: inline; }
-  .hw-step-progress { grid-column: 1 / -1; max-width: none; margin: 0; }
+  .hw-step-progress { display: none; }
   .hw-step-days { width: 100%; }
   .hw-step-days button { gap: 2px; }
   .hw-step-column { gap: 1px; }
@@ -369,11 +393,16 @@
   .hw-lung-best-short { display: inline; }
   .hw-sky { width: min(132px, 69cqw); height: auto; opacity: .72; }
   .hw-temperature { font-size: 50px; }
+  .hw-glucose { align-items: center; }
+  .hw-glucose .hw-glucose-value { font-size: clamp(28px, 18cqw, 35px); line-height: 1; }
   .hw-glucose .hw-number-line { flex-wrap: wrap; gap: 4px; }
-  .hw-glucose .bw-muted { margin-top: 4px; }
+  .hw-glucose .bw-muted { margin-top: 4px; font-size: 11px; line-height: 1.2; }
+  .hw-glucose-target-long { display: none; }
+  .hw-glucose-target-short { display: inline; white-space: nowrap; }
   .hw-glucose-ring { flex-basis: clamp(55px, 34cqw, 72px); width: clamp(55px, 34cqw, 72px); height: auto; aspect-ratio: 1; margin-right: 0; gap: 2px; }
   .hw-glucose-ring .bw-dot-number { width: auto; height: 16px; }
   .hw-glucose-card .bw-header, .hw-hourly-card .bw-header, .hw-sun-card .bw-header { flex-wrap: wrap; row-gap: 2px; }
+  .hw-glucose-card .bw-header { row-gap: 4px; margin-bottom: 9px; }
   .hw-glucose-card .bw-aside, .hw-hourly-card .bw-aside, .hw-sun-card .bw-aside { flex-basis: 100%; white-space: normal; }
   .hw-hourly .hw-scrub, .hw-sun .hw-scrub { margin-top: 0; }
   .hw-sun > .hw-between { line-height: 1.2; }
@@ -412,9 +441,20 @@
   .hw-hourly, .hw-sun { gap: 4px; }
 }
 
+@container bloom (max-width: 230px) and (max-height: 168px) {
+  .hw-steps { gap: 4px; }
+  .hw-steps-readout { gap: 2px; }
+  .hw-steps-readout .bw-dot-number { height: 26px; }
+  .hw-step-column i { width: 2px; height: 2px; }
+}
+
 @container bloom (min-height: 236px) {
   .hw-activity-control { max-width: clamp(99px, min(70cqw, 48cqh), 156px); }
-  .hw-air-chart { max-height: 94px; }
+  .hw-steps { align-content: space-between; align-items: flex-start; }
+  .hw-step-days { align-self: end; }
+  .hw-air { justify-content: flex-start; gap: 8px; }
+  .hw-air .hw-air-chart { order: 1; flex: 0 1 auto; aspect-ratio: 132 / 38; max-height: 94px; margin-top: auto; }
+  .hw-air > .hw-between { order: 2; }
   .hw-wind { justify-content: center; gap: 12px; }
   .hw-weather { justify-content: center; gap: 8px; }
   .hw-sky { inset-block-start: 50%; transform: translateY(-50%); }

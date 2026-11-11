@@ -1,7 +1,7 @@
 {
   "name": "@redheadesign/widgets",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Interactive React widgets and standalone HTML widgets for Telegram bots.",
   "repository": "github:redheadesign/widgets",
   "license": "UNLICENSED",
@@ -34,6 +34,7 @@
     "preview": "vite preview --host localhost",
     "check:telegram": "node --experimental-strip-types scripts/check-telegram.mjs",
     "qa:landing": "node scripts/qa-landing.mjs",
+    "qa:web": "node scripts/qa-web-states.mjs",
     "qa:widgets": "node --experimental-strip-types scripts/qa-widgets.mjs"
   },
   "dependencies": {

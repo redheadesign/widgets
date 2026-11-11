@@ -14,6 +14,7 @@
   --bw-radius: 29px;
   --bw-white: #faf9ff;
   --bw-dim: rgb(245 241 255 / 68%);
+  --bw-chart-edge-fade: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
   width: var(--bw-width, 368px);
   max-width: 100%;
   height: var(--bw-height, 176px);
