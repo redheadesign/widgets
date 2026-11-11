@@ -39,13 +39,14 @@ function splitOptions(block: Tile): Tile[][] {
 
 const isPortrait = (tile: Tile) => tile.width === 1 && tile.height === 2;
 
-export function packBento(count: number, columns: number, seed: number, requirements: { wide?: number; short?: boolean; portrait?: number; square?: boolean } = {}): Tile[] {
+export function packBento(count: number, columns: number, seed: number, requirements: { wide?: number; short?: boolean; portrait?: number; square?: number } = {}): Tile[] {
   if (!count) return [];
   const random = randomFrom(seed);
   const pairs = Math.floor(columns / 2);
   const minimumBands = Math.ceil(columns / 2);
   const wideCount = pairs ? requirements.wide ?? 0 : 0;
   const portraitCount = requirements.portrait ?? 0;
+  const squareCount = requirements.square ?? 0;
   const minimumRows = Math.ceil((count + wideCount) / columns);
   const idealRows = Math.max(minimumRows, Math.ceil(count * (1.25 + random() * .3) / columns));
   const maximumRows = 2 * Math.floor(count / minimumBands);
@@ -53,10 +54,10 @@ export function packBento(count: number, columns: number, seed: number, requirem
   const minimumTiles = (height: number) => Math.ceil(height / 2) * pairs + (columns % 2) * height;
   const shortSplit = (height: number) => requirements.short && height % 2 === 0 ? 1 : 0;
   // A square in a two-column band needs another tile beside it.
-  const squareSplit = (height: number) => requirements.square && columns % 2 === 0
-    ? (height % 2 === 0 || requirements.short ? 2 : 1) : 0;
+  const squareSplit = (height: number) => squareCount && columns % 2 === 0
+    ? 2 * Math.ceil(squareCount / 2) - Number(height % 2 !== 0 && !requirements.short) : 0;
   if (columns === 1) {
-    rows = Math.min(rows, count + portraitCount, 2 * count - Number(Boolean(requirements.short)) - Number(Boolean(requirements.square)));
+    rows = Math.min(rows, count + portraitCount, 2 * count - Number(Boolean(requirements.short)) - squareCount);
   } else {
     // Even without portrait merges there must be enough slots for each featured card.
     while (rows > minimumRows && minimumTiles(rows) + shortSplit(rows) + squareSplit(rows) + wideCount > count) rows--;
@@ -86,23 +87,30 @@ export function packBento(count: number, columns: number, seed: number, requirem
   const shuffled = shuffle(blocks, random);
   const shortBlock = requirements.short ? shuffled.find(block => block.height === 1) ?? shuffled[0] : undefined;
   const afterShort = shuffled.filter(block => block !== shortBlock);
-  const squareBlock = requirements.square
-    ? afterShort.find(block => block.width === 1) ?? afterShort.find(block => block.height === 1) ?? afterShort[0]
-    : undefined;
-  const wideBlocks = new Set(afterShort.filter(block => block !== squareBlock && block.width === 2).slice(0, wideCount));
+  const squareBlocks = new Map<Tile, number>();
+  let squaresRemaining = squareCount;
+  for (const block of [...afterShort].sort((a, b) => a.width - b.width || a.height - b.height)) {
+    if (!squaresRemaining) break;
+    const reserved = Math.min(squaresRemaining, block.width * block.height, 2);
+    squareBlocks.set(block, reserved);
+    squaresRemaining -= reserved;
+  }
+  const wideBlocks = new Set(afterShort.filter(block => !squareBlocks.has(block) && block.width === 2).slice(0, wideCount));
   let portraitBudget = portraitCount;
   const plans = shuffled.map(block => {
-    const fit: TileFit | undefined = block === shortBlock ? 'short' : block === squareBlock ? 'square' : wideBlocks.has(block) ? 'wide' : undefined;
+    const squares = squareBlocks.get(block) ?? 0;
+    const fit: TileFit | undefined = block === shortBlock ? 'short' : squares ? 'square' : wideBlocks.has(block) ? 'wide' : undefined;
+    const required = squares || Number(Boolean(fit));
     const compatible = (tile: Tile) => tile.height === 1 && (fit === 'wide' ? tile.width === 2 : fit !== 'square' || tile.width === 1);
     const portraitLimit = fit || block.height === 1 ? 0 : Math.min(block.width, portraitBudget);
     portraitBudget -= portraitLimit;
-    const choices = splitOptions(block).filter(parts => parts.filter(isPortrait).length <= portraitLimit && (!fit || parts.some(compatible)));
-    return { fit, compatible, choices, min: Math.min(...choices.map(parts => parts.length)), max: Math.max(...choices.map(parts => parts.length)) };
+    const choices = splitOptions(block).filter(parts => parts.filter(isPortrait).length <= portraitLimit && parts.filter(compatible).length >= required);
+    return { fit, required, compatible, choices, min: Math.min(...choices.map(parts => parts.length)), max: Math.max(...choices.map(parts => parts.length)) };
   });
   let remaining = count;
   let minimum = plans.reduce((sum, plan) => sum + plan.min, 0);
   let maximum = plans.reduce((sum, plan) => sum + plan.max, 0);
-  const tiles = plans.flatMap<Tile>(({ fit, compatible, choices, min, max }) => {
+  const tiles = plans.flatMap<Tile>(({ fit, required, compatible, choices, min, max }) => {
     minimum -= min;
     maximum -= max;
     // Each block supports a consecutive range of tile counts, so these bounds
@@ -110,8 +118,8 @@ export function packBento(count: number, columns: number, seed: number, requirem
     const possible = choices.filter(parts => remaining - parts.length >= minimum && remaining - parts.length <= maximum);
     const selected = possible[Math.floor(random() * possible.length)];
     remaining -= selected.length;
-    const anchor = fit ? selected.find(compatible) : undefined;
-    return selected.map(part => part === anchor ? { ...part, fit } : isPortrait(part) ? { ...part, fit: 'portrait' } : part);
+    const anchors = selected.filter(compatible).slice(0, required);
+    return selected.map(part => anchors.includes(part) ? { ...part, fit } : isPortrait(part) ? { ...part, fit: 'portrait' } : part);
   });
   return tiles.sort((a, b) => a.row - b.row || a.column - b.column);
 }

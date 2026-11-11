@@ -8,11 +8,12 @@ const output = new URL('../qa/run/', import.meta.url);
 const widths = [320, 390, 768, 1024, 1440, 1920];
 const seeds = [1, 13, 42, 77, 169, 277, 904, 2026];
 const gridSpec = { columns: 3, module: 176, gap: 16, width: 944 };
+const squareIds = ['clock', 'steps', 'users', 'moon-phase', 'compass'];
 const categories = {
   'Аналитика': ['revenue', 'users', 'funnel', 'goal', 'retention'],
   'Здоровье': ['heart-rate', 'activity', 'steps', 'sleep', 'lung-capacity', 'hydration', 'glucose', 'breathing'],
-  'Погода': ['weather', 'hourly', 'air-quality', 'uv-index', 'wind', 'sun'],
-  'Дом': ['thermostat', 'lights', 'energy', 'timer', 'lock'],
+  'Погода': ['weather', 'air-quality', 'uv-index', 'wind', 'sun', 'moon-phase'],
+  'Дом': ['thermostat', 'lights', 'energy', 'timer', 'lock', 'compass'],
   'На каждый день': ['clock', 'reminders', 'music', 'stocks'],
 };
 const all = Object.values(categories).flat().sort();
@@ -42,7 +43,7 @@ try {
       return Number(grid.style.getPropertyValue('--bento-columns')) === columns &&
         Math.abs(Number.parseFloat(getComputedStyle(grid).zoom) - scale) < 0.002;
     }, { count: expected.length, spec: gridSpec });
-    const data = await grid.evaluate((element, spec) => {
+    const data = await grid.evaluate((element, { spec, squareIds }) => {
       const style = getComputedStyle(element);
       const nativeCols = style.gridTemplateColumns.split(' ').map(Number.parseFloat);
       const nativeRows = style.gridTemplateRows.split(' ').map(Number.parseFloat);
@@ -80,7 +81,7 @@ try {
           defects.push(id + ': needs a 2×1 tile');
         }
         if (id === 'timer' && height !== 1) defects.push(id + ': needs a one-row tile');
-        if (id === 'clock' && (width !== 1 || height !== 1)) defects.push(id + ': needs a square tile');
+        if (squareIds.includes(id) && (width !== 1 || height !== 1)) defects.push(id + ': needs a square tile');
         if (width === 1 && height === 2 && !['hydration', 'breathing', 'lock', 'lights', 'weather', 'thermostat'].includes(id)) {
           defects.push(id + ': is not eligible for a portrait tile');
         }
@@ -156,7 +157,7 @@ try {
         defects.push('page scrolls horizontally by ' + (scrollWidth - clientWidth) + 'px (' + beyondPage.join(', ') + ')');
       }
       return { tiles, defects, columns: cols.length, rows: rows.length, gridWidth: origin.width, scale };
-    }, gridSpec);
+    }, { spec: gridSpec, squareIds });
     assert.deepEqual(data.tiles.map(tile => tile.id).sort(), [...expected].sort(), viewport + ': incorrect tile IDs');
     for (const defect of data.defects) issues.add(viewport + ' · ' + defect);
     return data;
@@ -248,7 +249,7 @@ try {
     console.log(width + 'px · ' + seeds.length + ' reproducible layouts captured');
   }
 
-  for (const [width, height] of [[176, 364], [364, 364], [266, 266], [720, 720]]) {
+  for (const [width, height] of [[160, 160], [176, 176], [368, 176], [176, 364], [364, 364], [266, 266], [720, 720]]) {
     await page.setViewportSize({ width, height });
     const fixture = new URL(url);
     fixture.search = '?embed=timer&fit=container&reduce=1';
@@ -257,20 +258,24 @@ try {
     await timer.waitFor();
     const sizes = await timer.evaluate(frame => {
       const bounds = selector => frame.querySelector(selector).getBoundingClientRect();
+      const card = bounds('.bw-card');
       const body = bounds('.bw-body');
-      const readout = bounds('.ah-timer-main');
-      const chart = bounds('.ah-timer-chart');
+      const readout = bounds('[role="timer"] .bw-dot-number');
+      const controls = bounds('.ah-controls');
       return {
-        pinned: Math.abs(chart.bottom - body.bottom) <= 2,
-        gap: chart.top - readout.bottom,
-        controlsFit: [...frame.querySelectorAll('button')].every(button => {
+        centered: Math.abs(readout.left + readout.right - card.left - card.right) <= 2 &&
+          Math.abs(readout.top + readout.bottom - card.top - card.bottom) <= 2,
+        pinned: Math.abs(controls.bottom - body.bottom) <= 2,
+        hasChart: frame.querySelector('.ah-timer-chart') !== null,
+        gap: controls.top - readout.bottom,
+        controlsFit: [...frame.querySelectorAll('.ah-controls button')].every(button => {
           const rect = button.getBoundingClientRect();
           return rect.left >= body.left - 1 && rect.right <= body.right + 1 && rect.bottom <= body.bottom + 1;
         }),
       };
     });
     const dimensions = width + 'x' + height;
-    assert(sizes.pinned && sizes.controlsFit && sizes.gap >= 12, dimensions + ' · ' + JSON.stringify(sizes));
+    assert(sizes.centered && sizes.pinned && sizes.controlsFit && !sizes.hasChart && sizes.gap >= 8, dimensions + ' · ' + JSON.stringify(sizes));
     await timer.screenshot({ path: fileURLToPath(new URL('timer-centered-' + dimensions + '.png', output)) });
     await timer.getByRole('button', { name: 'Add one minute' }).click();
     assert(await timer.getByRole('img', { name: '17:00' }).isVisible());

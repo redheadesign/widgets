@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState, type ComponentType, type CSSProperties, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useId, useRef, useState, type ComponentType, type CSSProperties, type ReactNode } from 'react';
 import { MotionConfig } from 'motion/react';
 import { referenceSurface } from './lighting';
 import {
@@ -112,6 +112,26 @@ export function WidgetCard({ title, label, icon, aside, children, className = ''
       <div className="bw-body">{children}</div>
     </section>
   );
+}
+
+export function ChartEdgeFade({ box, children }: { box: readonly [number, number, number, number]; children: ReactNode }) {
+  const id = useId();
+  const [x, y, width, height] = box;
+  const gradientId = `${id}-gradient`;
+  return <>
+    <defs>
+      <linearGradient id={gradientId}>
+        <stop stopColor="white" stopOpacity="0" />
+        <stop offset="12%" stopColor="white" />
+        <stop offset="88%" stopColor="white" />
+        <stop offset="100%" stopColor="white" stopOpacity="0" />
+      </linearGradient>
+      <mask id={id} maskUnits="userSpaceOnUse" maskContentUnits="userSpaceOnUse" x={x} y={y} width={width} height={height}>
+        <rect x={x} y={y} width={width} height={height} fill={`url(#${gradientId})`} />
+      </mask>
+    </defs>
+    <g mask={`url(#${id})`}>{children}</g>
+  </>;
 }
 
 const glyphs: Record<string, string> = {

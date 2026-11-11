@@ -1,0 +1,19 @@
+.bw-card.bwi-card { background: transparent; box-shadow: none; }
+.bw-card.bwi-card::before, .bw-card.bwi-card::after { content: none; }
+.bwi-card .bw-body { display: grid; place-items: center; container-type: size; }
+
+.bwi-compass { display: grid; justify-items: center; gap: 4px; }
+.bwi-compass-face { width: min(100cqw, calc(100cqh - 20px), 120px); aspect-ratio: 1; border-radius: 50%; cursor: grab; touch-action: none; }
+.bwi-compass-face:active { cursor: grabbing; }
+.bwi-compass-face svg { display: block; width: 100%; height: 100%; }
+.bwi-compass-rim { fill: #111317; stroke: rgb(255 255 255 / 20%); }
+.bwi-compass-face line { stroke: #fff; stroke-linecap: round; }
+.bwi-compass-inner { fill: #090b0e; stroke: rgb(255 255 255 / 11%); }
+.bwi-compass-face text { text-anchor: middle; fill: #d0d2d7; font-size: 10px; font-weight: 560; }
+.bwi-compass-face .bwi-compass-north, .bwi-compass-tip { fill: #fa897e; }
+.bwi-compass-needle { transform-box: view-box; transform-origin: 50% 50%; transition: transform calc(180ms / var(--bw-speed, 1)) cubic-bezier(.22,.75,.25,1); }
+.bwi-compass-face:active .bwi-compass-needle { transition-duration: 0s; }
+.bwi-compass-tail { fill: #e2e4e7; }
+.bwi-compass-pivot { fill: #1c2025; stroke: #c2c6ce; }
+.bwi-compass-reading { color: var(--bw-white); font-size: 13px; line-height: 16px; font-variant-numeric: tabular-nums; }
+.bwi-compass-reading span { color: var(--bw-dim); margin-inline-start: 2px; }

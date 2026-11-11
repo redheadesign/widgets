@@ -5,6 +5,11 @@ import { glowFields } from '../src/widgets/lighting-data.ts';
 const size = 384;
 const xPositions = [6, 24, 50, 76, 94];
 const yPositions = [4, 16, 33, 50, 67, 84, 96];
+const centerX = 50;
+const centerY = 48;
+const radiusX = 50;
+const radiusY = 52;
+const rimSamples = 360;
 const output = new URL('../src/widgets/lighting-assets/', import.meta.url);
 
 // A zero endpoint slope joins the outer, constant color smoothly. The interior
@@ -51,23 +56,51 @@ const dither = [
   [42, 26, 38, 22, 41, 25, 37, 21],
 ];
 
+function smoothstep(start, end, value) {
+  const t = Math.max(0, Math.min(1, (value - start) / (end - start)));
+  return t * t * (3 - 2 * t);
+}
+
 function renderPixels(rows) {
   const rgb = rows.map((row) => row.map((hex) => Buffer.from(hex, 'hex')));
   const rowSplines = rgb.map((row) =>
     [0, 1, 2].map((channel) => spline(xPositions, row.map((color) => color[channel]))),
   );
+  const sampleColumn = (x) => [0, 1, 2].map((channel) =>
+    spline(yPositions, rowSplines.map((row) => row[channel](x))),
+  );
+  const center = sampleColumn(centerX).map((channel) => channel(centerY));
+  const rim = Array.from({ length: rimSamples }, (_, index) => {
+    const angle = (index / rimSamples) * 2 * Math.PI;
+    const x = centerX + radiusX * Math.cos(angle);
+    const y = centerY + radiusY * Math.sin(angle);
+    return sampleColumn(x).map((channel) => channel(y));
+  });
+
   const pixels = Buffer.alloc(size * size * 3);
   for (let x = 0; x < size; x++) {
     const xPosition = (x + 0.5) * 100 / size;
-    const channels = [0, 1, 2].map((channel) =>
-      spline(yPositions, rowSplines.map((row) => row[channel](xPosition))),
-    );
+    const channels = sampleColumn(xPosition);
+    const dx = (xPosition - centerX) / radiusX;
     for (let y = 0; y < size; y++) {
       const yPosition = (y + 0.5) * 100 / size;
+      const dy = (yPosition - centerY) / radiusY;
+      const distance = Math.hypot(dx, dy);
+      // Shape the interior with an elliptical falloff and keep the sampled colors at the rim.
+      const glow = smoothstep(.13, 1.04, distance) ** 1.45;
+      const original = smoothstep(.78, 1.18, distance);
+      const angle = (Math.atan2(dy, dx) / (2 * Math.PI) + 1) * rimSamples;
+      const from = Math.floor(angle);
+      const fraction = angle - from;
+      const left = rim[from % rimSamples];
+      const right = rim[(from + 1) % rimSamples];
       const threshold = (dither[y % 8][x % 8] + 0.5) / 64;
       const offset = (y * size + x) * 3;
       for (let channel = 0; channel < 3; channel++) {
-        pixels[offset + channel] = Math.floor(channels[channel](yPosition) + threshold);
+        const rimColor = left[channel] + (right[channel] - left[channel]) * fraction;
+        const rounded = center[channel] + (rimColor - center[channel]) * glow;
+        const color = rounded + (channels[channel](yPosition) - rounded) * original;
+        pixels[offset + channel] = Math.floor(color + threshold);
       }
     }
   }

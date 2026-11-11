@@ -1,7 +1,7 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import type { ButtonHTMLAttributes, CSSProperties, KeyboardEvent, PointerEvent, ReactNode } from 'react';
 import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion, useTransform } from 'motion/react';
-import { DotNumber, Icon, usePulse, useWidgetSettings, WidgetCard } from './core';
+import { ChartEdgeFade, DotNumber, Icon, usePulse, useWidgetSettings, WidgetCard } from './core';
 import type { WidgetDefinition } from './core.js';
 import { musicTracks } from './music-tracks';
 import './analytics-home.css';
@@ -161,9 +161,9 @@ export function RevenueWidget() {
       <div className="ah-revenue-chart">
         <div className="ah-revenue-plot">
           <svg viewBox="0 0 336 178" preserveAspectRatio="none" aria-hidden="true" className="ah-fill-svg">
-            <g className="ah-chart-fade">
+            <ChartEdgeFade box={[0, 0, 336, 178]}>
               <path d="M0 92h336M0 135h336" stroke="white" strokeOpacity=".14" strokeDasharray=".7 5" />
-            </g>
+            </ChartEdgeFade>
             {points.map(([x, y], index) => (
               <motion.rect key={`${period}-${index}`} x={x - 15} y={y} height={178 - y} width="30" rx="15"
                 style={{ transformBox: 'fill-box', originX: '50%', originY: '100%' }} initial={draw ? { scaleY: 0.15 } : false}
@@ -218,7 +218,7 @@ export function UsersWidget() {
         </Press>
       </div>
       <svg viewBox="0 0 146 26" preserveAspectRatio="none" className="ah-user-chart" aria-hidden="true">
-        <g className="ah-chart-fade">{columns.slice(0, -1)}</g>
+        <ChartEdgeFade box={[0, 0, 146, 26]}>{columns.slice(0, -1)}</ChartEdgeFade>
         {columns.at(-1)}
       </svg>
     </WidgetCard>
@@ -263,7 +263,7 @@ export function TrafficWidget() {
       <div className="ah-traffic">
         <div className="ah-donut" aria-label={`${channel.title} ${channel.value}%`}>
           <svg viewBox="0 0 96 96" aria-hidden="true" className="ah-fill-svg">
-            <g className="ah-chart-fade"><circle cx="48" cy="48" r="40" fill="none" stroke="white" strokeOpacity=".06" strokeWidth="8" /></g>
+            <ChartEdgeFade box={[0, 0, 96, 96]}><circle cx="48" cy="48" r="40" fill="none" stroke="white" strokeOpacity=".06" strokeWidth="8" /></ChartEdgeFade>
             {channels.map(({ title, value, color }, index) => {
               const circumference = Math.PI * 80;
               const offset = channels.slice(0, index).reduce((sum, item) => sum + item.value, 0);
@@ -315,15 +315,15 @@ export function GoalWidget() {
   return (
     <WidgetCard className="ah-goal-card" title="Monthly goal" icon="target" aside={<span className="bw-muted">{money.format(value * 620)} of {money.format(62000)}</span>}>
       <div className="ah-goal">
-        <svg viewBox="0 0 200 111" aria-hidden="true" className="ah-goal-svg">
+        <svg viewBox="0 0 200 120" aria-hidden="true" className="ah-goal-svg">
           <defs><linearGradient id={gradient} gradientUnits="userSpaceOnUse" x1="16" x2="172" y1="0" y2="0"><stop stopColor="#3977f4" /><stop offset=".53" stopColor="#84d4f9" /><stop offset=".76" stopColor="#ffc669" /><stop offset="1" stopColor="#ff713e" /></linearGradient></defs>
-          <g className="ah-chart-fade"><path d={arc} fill="none" stroke="white" strokeOpacity=".12" strokeWidth="22" strokeLinecap="round" /></g>
+          <ChartEdgeFade box={[0, 0, 200, 120]}><path d={arc} fill="none" stroke="white" strokeOpacity=".12" strokeWidth="22" strokeLinecap="round" /></ChartEdgeFade>
           <motion.path d={arc} fill="none" stroke={`url(#${gradient})`} strokeWidth="22" strokeLinecap="round" pathLength={arcLength} opacity={arcOpacity} />
           <motion.circle cx={knobX} cy={knobY} r="13" fill="white" />
         </svg>
         <div className="ah-goal-value"><DotNumber value={`${value}%`} size={27} /></div>
         <ScrubRange value={value} max={100} label="Monthly goal progress" valueText={`${value}%`} onValue={setValue}
-          pointerValue={(x, y) => 0.5 + Math.atan2((x - 0.5) * 200, 104 - y * 111) / Math.PI} />
+          pointerValue={(x, y) => 0.5 + Math.atan2((x - 0.5) * 200, 104 - y * 120) / Math.PI} />
       </div>
     </WidgetCard>
   );
@@ -428,7 +428,12 @@ export function ThermostatWidget() {
           <div className="ah-dial-value" aria-hidden="true"><DotNumber value={temperature} size={42} /></div>
         </div>
       </div>
-      <div className="ah-bottom"><div className="ah-climate-readouts"><span><small>Indoor</small>26.4°</span><span><small>Humidity</small>54%</span></div><Press className="bw-action ah-fan" icon="fan" bright={fan} aria-pressed={fan} onClick={() => setFan((current) => !current)}>Fan</Press></div>
+      <div className="ah-climate-footer">
+        <div className="ah-climate-readouts"><span><small>Indoor</small>26.4°</span><span><small>Humidity</small>54%</span></div>
+        <Press className="bw-action ah-fan" icon="fan" bright={fan} aria-label="Fan" aria-pressed={fan} onClick={() => setFan((current) => !current)}>
+          <span className="ah-fan-label">Fan</span>
+        </Press>
+      </div>
     </WidgetCard>
   );
 }
@@ -470,9 +475,9 @@ export function EnergyWidget() {
         <div className="ah-value-row"><DotNumber value={energyValue.format(energyData[hour])} size={30} /><span className="bw-muted">kWh</span></div>
         <div className="ah-energy-plot">
           <svg viewBox="0 0 144 53" className="ah-fill-svg" preserveAspectRatio="none" aria-hidden="true">
-            <g className="ah-chart-fade">
+            <ChartEdgeFade box={[0, 0, 144, 53]}>
               {energyBars.map(bar => <rect key={bar.x} {...bar} width="4" rx="1.8" fill="white" fillOpacity=".36" />)}
-            </g>
+            </ChartEdgeFade>
             <motion.rect initial={false} animate={energyBars[hour]} transition={transition} width="4" rx="1.8" fill={accent} />
           </svg>
           <ScrubRange hover value={hour} max={23} label="Energy usage by hour" valueText={`${clockFormat.format(hour)}:00, ${energyValue.format(energyData[hour])} kilowatt hours`}
@@ -485,15 +490,13 @@ export function EnergyWidget() {
 }
 
 const defaultTimer = 16 * 60;
-const timerTicks = [...Array<number>(42).fill(8), 11, 14, 18, 21, 24, 38];
 
 export function TimerWidget() {
   const [seconds, setSeconds] = useState(defaultTimer);
-  const [total, setTotal] = useState(defaultTimer);
+  const [restartSeconds, setRestartSeconds] = useState(defaultTimer);
   const [running, setRunning] = useState(false);
   const { paused, speed } = useWidgetSettings();
   const active = running && seconds > 0;
-  const transition = useTransition();
 
   useEffect(() => {
     if (!active || paused) return;
@@ -504,47 +507,30 @@ export function TimerWidget() {
   const adjust = (amount: number) => {
     const next = clamp(seconds + amount, 0, 99 * 60 + 59);
     setSeconds(next);
-    if (!active || next > total) setTotal(next);
+    if (!active || next > restartSeconds) setRestartSeconds(next);
     if (next === 0) setRunning(false);
   };
   const reset = () => {
     setRunning(false);
-    setTotal(defaultTimer);
+    setRestartSeconds(defaultTimer);
     setSeconds(defaultTimer);
   };
   const toggle = () => {
     if (seconds === 0) {
-      setSeconds(total || defaultTimer);
-      if (!total) setTotal(defaultTimer);
+      setSeconds(restartSeconds || defaultTimer);
+      if (!restartSeconds) setRestartSeconds(defaultTimer);
     }
     setRunning(!active);
   };
-  const progress = total > 0 ? clamp(seconds / total, 0, 1) : 0;
-  const playhead = progress * (timerTicks.length - 1);
-  const before = Math.floor(playhead);
-  const after = Math.min(before + 1, timerTicks.length - 1);
-  const markerHeight = timerTicks[before] + (timerTicks[after] - timerTicks[before]) * (playhead - before);
   return (
     <WidgetCard className="ah-timer-card" title="Timer" icon="timer" aside={<span className="bw-muted" role="status">{seconds === 0 ? 'Done' : active && !paused ? 'Running' : 'Paused'}</span>}>
-      <div className="ah-timer-main">
-        <div role="timer"><DotNumber value={durationDigits(seconds)} size={36} /></div>
-        <div className="ah-controls">
-          <Press icon="minus" aria-label="Remove one minute" onClick={() => adjust(-60)} />
-          <Press icon="plus" aria-label="Add one minute" onClick={() => adjust(60)} />
-          <Press icon="rotate-ccw" aria-label="Reset timer" onClick={reset} />
-          <Press icon={active ? 'pause' : 'play'} bright aria-label={active ? 'Pause timer' : 'Start timer'} onClick={toggle} />
-        </div>
+      <div className="ah-timer-value" role="timer"><DotNumber value={durationDigits(seconds)} size={36} /></div>
+      <div className="ah-controls ah-timer-controls">
+        <Press icon="minus" aria-label="Remove one minute" onClick={() => adjust(-60)} />
+        <Press icon="plus" aria-label="Add one minute" onClick={() => adjust(60)} />
+        <Press icon="rotate-ccw" aria-label="Reset timer" onClick={reset} />
+        <Press icon={active ? 'pause' : 'play'} bright aria-label={active ? 'Pause timer' : 'Start timer'} onClick={toggle} />
       </div>
-      <svg viewBox="0 0 336 40" preserveAspectRatio="none" className="ah-timer-chart" aria-hidden="true">
-        <g className="ah-chart-fade">
-          {timerTicks.map((height, index) => (
-            <motion.rect key={index} x={index * (334 / 47)} y={40 - height} width="1.55" height={height} rx=".775" fill="white"
-              initial={false} animate={{ opacity: index <= playhead ? 0.68 : 0.2 }} transition={transition} />
-          ))}
-        </g>
-        <motion.rect width="2" rx="1" fill={accent} initial={false} transition={transition}
-          animate={{ x: playhead * (334 / 47), y: 40 - markerHeight, height: markerHeight }} />
-      </svg>
     </WidgetCard>
   );
 }
@@ -705,16 +691,42 @@ const tasks = [
   { title: 'Pay the hosting invoice', compact: 'Pay hosting' },
   { title: 'Buy coffee beans', compact: 'Buy coffee beans' },
   { title: 'Call the dentist', compact: 'Call the dentist' },
+  { title: 'Approve homepage copy', compact: 'Approve copy' },
+  { title: 'Book train tickets', compact: 'Book tickets' },
+  { title: 'Send meeting notes', compact: 'Send notes' },
+  { title: 'Water the plants', compact: 'Water plants' },
+  { title: 'Review weekly budget', compact: 'Review budget' },
+  { title: 'Back up project files', compact: 'Back up files' },
 ];
+const reminderRowHeight = 24;
+const reminderRowGap = 8;
+const reminderListStyle = {
+  '--ah-reminder-row-height': `${reminderRowHeight}px`,
+  '--ah-reminder-row-gap': `${reminderRowGap}px`,
+} as CSSProperties;
 
 export function RemindersWidget() {
-  const [completed, setCompleted] = useState([false, false, true, false]);
-  const count = completed.filter(Boolean).length;
+  const [completed, setCompleted] = useState(() => tasks.map((_, index) => index === 2));
+  const [visibleCount, setVisibleCount] = useState(4);
+  const listRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const body = listRef.current?.parentElement;
+    if (!body) return;
+    const measure = (height: number) => {
+      const rows = Math.floor((height + reminderRowGap) / (reminderRowHeight + reminderRowGap));
+      setVisibleCount(clamp(rows, 4, tasks.length));
+    };
+    measure(body.clientHeight);
+    const observer = new ResizeObserver(([entry]) => measure(entry.contentRect.height));
+    observer.observe(body);
+    return () => observer.disconnect();
+  }, []);
+  const count = completed.slice(0, visibleCount).filter(Boolean).length;
   return (
     <WidgetCard label="Reminders" className="ah-reminders-card">
-      <span className="bw-visually-hidden" role="status">{count} of {tasks.length}</span>
-      <div className="ah-reminders" role="group" aria-label="Reminder checklist">
-        {tasks.map(({ title, compact }, index) => (
+      <span className="bw-visually-hidden" role="status">{count} of {visibleCount}</span>
+      <div className="ah-reminders" ref={listRef} style={reminderListStyle} role="group" aria-label="Reminder checklist">
+        {tasks.slice(0, visibleCount).map(({ title, compact }, index) => (
           <Press key={title} role="checkbox" aria-label={title} aria-checked={completed[index]} onClick={() => setCompleted((previous) => previous.map((done, at) => at === index ? !done : done))}>
             <span className="ah-check"><Icon name="check" size={11} /></span><span className="ah-task">
               <span className="ah-task-long">{title}</span><span className="ah-task-short">{compact}</span>
@@ -847,14 +859,14 @@ export function MusicWidget() {
       </div>
       <div className="ah-wave" style={{ '--ah-note-period': `${0.45 / playbackSpeed}s` } as CSSProperties}>
         <svg viewBox="0 0 336 26" preserveAspectRatio="none" className="ah-fill-svg" aria-hidden="true">
-          <g className="ah-chart-fade">
+          <ChartEdgeFade box={[0, 0, 336, 26]}>
             {amplitudes.map((amount, index) => (
               <motion.rect key={index} x={index * (331 / 39)} y={(26 - amount) / 2} height={amount} width="5" rx="2.5" fill="white"
               className="ah-wave-bar" data-sounding={active && Math.abs(index - playbackProgress * (amplitudes.length - 1)) < 3}
               style={{ '--ah-beat-offset': `${index % 4 * -0.065}s` } as CSSProperties}
                 initial={false} animate={{ opacity: index <= playhead ? 1 : 0.26 }} transition={transition} />
             ))}
-          </g>
+          </ChartEdgeFade>
           <rect x={playhead * (331 / 39)} y={(26 - playheadHeight) / 2} height={playheadHeight} width="5" rx="2.5" fill="white"
             className="ah-wave-bar" data-sounding={active} style={{ '--ah-beat-offset': `${playhead % 4 * -0.065}s` } as CSSProperties} />
         </svg>
@@ -893,9 +905,9 @@ export function StocksWidget() {
       <div className="ah-stock-plot">
         <svg viewBox="0 0 144 48" preserveAspectRatio="none" className="ah-fill-svg" aria-hidden="true">
           <defs>
-            <linearGradient id={gradient} x1="0" y1="0" x2="0" y2="1"><stop stopColor="white" stopOpacity=".17"/><stop offset="1" stopColor="white" stopOpacity="0"/></linearGradient>
+            <linearGradient id={gradient} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="48"><stop stopColor="white" stopOpacity=".17"/><stop offset="1" stopColor="white" stopOpacity="0"/></linearGradient>
           </defs>
-          <g className="ah-chart-fade"><path d={`${curve}L144 48H0Z`} fill={`url(#${gradient})`} /></g>
+          <ChartEdgeFade box={[0, 0, 144, 48]}><path d={`${curve}L144 48H0Z`} fill={`url(#${gradient})`} /></ChartEdgeFade>
           <motion.path key={asset.code} d={curve} initial={hasSwitched.current ? { opacity: 0.38 } : false}
             animate={{ opacity: 1 }} transition={transition} stroke="white" strokeWidth="1.4" strokeLinecap="round" vectorEffect="non-scaling-stroke" fill="none" />
           {at !== null && <>

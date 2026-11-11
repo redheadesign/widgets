@@ -1,9 +1,10 @@
 import { useEffect, useId, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { DotNumber, Icon, usePulse, useWidgetSettings, WidgetCard } from './core';
+import { ChartEdgeFade, DotNumber, Icon, usePulse, useWidgetSettings, WidgetCard } from './core';
 import type { WidgetDefinition } from './core.js';
 import { referenceSurface } from './lighting';
+import { SunRays } from './sun-rays';
 import './health-weather.css';
 
 function Circle({ icon, label, onClick, light = false, pressed, disabled = false, filledIcon = false }: {
@@ -96,8 +97,10 @@ function HeartRate() {
   return <WidgetCard title="Heart rate" icon="heart-pulse" aside={<Action compactIcon icon={measuring ? 'pause' : 'activity'} pressed={measuring} onClick={() => setMeasuring(active => !active)}>{measuring ? 'Stop' : 'Measure'}</Action>}>
     <div className="hw-stack hw-heart" data-measuring={measuring}>
       <div className="hw-between hw-heart-top"><div className="hw-number-line"><DotNumber value={value} size={38} label={`${value} beats per minute`} /><span className="bw-unit">bpm</span></div><div className="hw-heart-stats"><div><span>Min</span><strong>58</strong></div><div><span>Max</span><strong>124</strong></div></div></div>
-      <svg className="hw-graphic hw-heart-chart hw-plot-fade" viewBox="0 0 336 60" preserveAspectRatio="none" aria-hidden="true">
-        <path className="hw-heart-trace" d={HEART_TRACE} stroke="var(--bw-accent)" strokeWidth="1.5" strokeLinejoin="round" vectorEffect="non-scaling-stroke" fill="none" />
+      <svg className="hw-graphic hw-heart-chart" viewBox="0 0 336 60" preserveAspectRatio="none" aria-hidden="true">
+        <ChartEdgeFade box={[0, 0, 336, 60]}>
+          <path className="hw-heart-trace" d={HEART_TRACE} stroke="var(--bw-accent)" strokeWidth="1.5" strokeLinejoin="round" vectorEffect="non-scaling-stroke" fill="none" />
+        </ChartEdgeFade>
       </svg>
     </div>
   </WidgetCard>;
@@ -135,10 +138,23 @@ const WHOLE_NUMBER = new Intl.NumberFormat('en-US');
 
 function Steps() {
   const [day, setDay] = useState(1);
+  const weekday = WEEKDAYS[day];
   const progress = Math.round(STEPS[day] / 100);
-  return <WidgetCard label="Steps">
+  const fill = Math.min(100, progress);
+  return <WidgetCard title="Steps" icon="footprints">
     <div className="hw-steps">
-      <div className="hw-steps-readout"><DotNumber value={WHOLE_NUMBER.format(STEPS[day])} size={34} /><p className="bw-muted">{WEEKDAYS[day]} · {progress}% of goal</p><div className="hw-step-progress" style={{ '--hw-step-progress': `${Math.min(100, progress)}%` } as CSSProperties} aria-hidden="true"><span className="hw-step-progress-marker" /></div></div>
+      <div className="hw-steps-readout">
+        <DotNumber value={WHOLE_NUMBER.format(STEPS[day])} size={34} />
+        <div className="hw-steps-goal">
+          <div className="hw-between hw-steps-goal-label">
+            <span>{weekday}</span><span className="hw-white" aria-hidden="true">{progress}%</span>
+          </div>
+          <div className="hw-step-progress" role="progressbar" aria-label={`${weekday} step goal`}
+            aria-valuenow={fill} aria-valuetext={`${progress}% of goal`}>
+            <span className="hw-step-progress-fill" style={{ inlineSize: `${fill}%` }} />
+          </div>
+        </div>
+      </div>
       <div className="hw-step-days" role="group" aria-label="Day of week">{WEEKDAYS.map((weekday, index) => (
         <button type="button" key={weekday} aria-label={weekday} aria-pressed={day === index} data-near-goal={STEPS[index] >= 9000} onClick={() => setDay(index)}><span className="hw-step-column" aria-hidden="true">{Array.from({ length: Math.round(STEPS[index] / 990) }, (_, point) => <i key={point} />)}</span><span>{weekday[0]}</span></button>
       ))}</div>
@@ -164,14 +180,14 @@ function Sleep() {
       <Scrub label="Sleep stage" max={31} value={selected} valueText={stage} onChange={setSelected}>
         <span className="hw-sleep-selection bw-muted hw-caption" aria-hidden="true">{stage}</span>
         <svg className="hw-graphic" viewBox="0 0 320 58" preserveAspectRatio="none" aria-hidden="true">
-          <g className="hw-plot-fade">
+          <ChartEdgeFade box={[0, 0, 320, 58]}>
             {STAGE_NAMES.map((name, index) => (
               <path key={name} d={`M0 ${8 + index * 14} H320`} stroke="#e9e0ff18" strokeDasharray="1 4" />
             ))}
             {SLEEP_STAGES.slice(0, -1).map((state, index) => (
               <path key={index} d={`M${index * 10 + 4.5} ${8 + state * 14} H${index * 10 + 9.5} V${8 + SLEEP_STAGES[index + 1] * 14} H${index * 10 + 14.5}`} stroke="#dad4ff49" fill="none" strokeWidth=".65" />
             ))}
-          </g>
+          </ChartEdgeFade>
           {SLEEP_STAGES.map((state, index) => (
             <rect className="hw-sleep-stage" key={index} x={index * 10} y={5.2 + state * 14} width="9" height="5.6" rx="2.8" fill={STAGE_COLORS[state]} opacity={index === selected ? 1 : .78} />
           ))}
@@ -214,9 +230,9 @@ function LungCapacity() {
       <div className="hw-lung-value"><DotNumber value={LUNG_NUMBER.format(value)} size={64} /><span className="bw-muted">Liters</span></div>
       <div className="hw-lung-visual">
         <svg className="hw-graphic" viewBox="0 0 336 103" aria-hidden="true">
-          <g className="hw-plot-fade">
+          <ChartEdgeFade box={[0, 0, 336, 103]}>
             {LUNG_ARCS.map(arc => <path key={`${arc.center}-${arc.width}`} d={lungArc(arc)} stroke="#f4cce650" strokeWidth=".85" strokeDasharray="1.2 4" fill="none" />)}
-          </g>
+          </ChartEdgeFade>
           {running && <path d={lungArc(mainArc)} stroke="#f6bcf0" strokeOpacity=".36" strokeWidth="1.4" fill="none" pathLength="1" strokeDasharray={`${progress} 1`} />}
           <motion.circle cx={markerX} cy={markerY} r="3" fill="white" initial={false} animate={{ opacity: running ? 1 : .95 }} transition={{ duration: duration(.16) }} />
         </svg>
@@ -418,11 +434,11 @@ function Hourly() {
     <div className="hw-stack hw-hourly">
       <Scrub label="Hourly forecast" max={HOURLY.length - 1} value={hour} valueText={readout} onChange={setHour}>
         <svg className="hw-graphic" viewBox="0 0 336 82" preserveAspectRatio="none" aria-hidden="true">
-          <defs><linearGradient id={gradient} x1="0" x2="0" y1="0" y2="1"><stop stopColor="#f0e7ff" stopOpacity=".2" /><stop offset="1" stopColor="#f0e7ff" stopOpacity="0" /></linearGradient></defs>
-          <g className="hw-plot-fade">
+          <defs><linearGradient id={gradient} gradientUnits="userSpaceOnUse" x1="0" x2="0" y1="8" y2="80"><stop stopColor="#f0e7ff" stopOpacity=".2" /><stop offset="1" stopColor="#f0e7ff" stopOpacity="0" /></linearGradient></defs>
+          <ChartEdgeFade box={[0, 0, 336, 82]}>
             <path d={`${hourlyPath} V80 H8Z`} fill={`url(#${gradient})`} />
             <path d={hourlyPath} stroke="#fff" strokeWidth="1.5" vectorEffect="non-scaling-stroke" fill="none" />
-          </g>
+          </ChartEdgeFade>
           {HOURLY.map(({ rain }, index) => (
             <rect className="hw-hourly-rain" key={index} x={hourlyX(index) - 1.5} y={79 - rain * .29} width="3" height={rain * .29} rx="1.5" fill={index === hour ? '#c3c8ff' : '#9197d289'} />
           ))}
@@ -448,9 +464,9 @@ function AirQuality() {
   return <WidgetCard title="Air quality" icon="leaf" className="hw-air-card">
     <div className="hw-stack hw-air">
       <svg className="hw-graphic hw-air-chart" viewBox="-6 -4 132 38" aria-hidden="true">
-        <g className="hw-plot-fade">
+        <ChartEdgeFade box={[-6, -4, 132, 38]}>
           <motion.path initial={false} animate={{ d: pollutant.line }} transition={{ duration: duration(.24), ease: 'easeOut' }} fill="none" stroke="white" strokeWidth="1.3" />
-        </g>
+        </ChartEdgeFade>
         <motion.circle initial={false} animate={{ cx: pollutant.x, cy: pollutant.y }} transition={{ duration: duration(.24), ease: 'easeOut' }} r="3.2" fill="var(--bw-accent)" />
       </svg>
       <DotNumber value={pollutant.index} size={28} />
@@ -518,21 +534,23 @@ const formatHour = (minutes: number) => `${Math.floor(minutes / 60)}:${String(mi
 function SunPath() {
   const [minutes, setMinutes] = useState(14 * 60 + 12);
   const progress = (minutes - SUNRISE) / (SUNSET - SUNRISE);
-  const twilight = Math.max(0, (progress - .58) / .42);
-  const dusk = twilight * twilight * (3 - 2 * twilight);
+  const horizon = Math.max(0, 1 - progress / .27, (progress - .58) / .42);
+  const twilight = horizon * horizon * (3 - 2 * horizon);
   const remaining = SUNSET - minutes;
   const readout = `${formatHour(minutes)} · ${Math.floor(remaining / 60)} h ${remaining % 60} min of light left`;
+  const daylight = 4 * progress * (1 - progress);
   const sunX = (27 + 282 * progress) / 336;
-  const sunY = (69 - 58 * 4 * progress * (1 - progress)) / 87;
+  const sunY = (69 - 58 * daylight) / 87;
   return <WidgetCard label="Sun" className="hw-sun-card">
-    <div className="hw-stack hw-sun" style={{ '--hw-sun-dusk': dusk, '--hw-sun-x': `${sunX * 100}%` } as CSSProperties}>
-      <div className="hw-sun-dusk" aria-hidden="true" />
+    <div className="hw-stack hw-sun" style={{ '--hw-sun-twilight': twilight, '--hw-sun-x': `${sunX * 100}%`, '--hw-sun-radiance': daylight * daylight } as CSSProperties}>
+      <div className="hw-sun-twilight" aria-hidden="true" />
       <Scrub label="Time of day" min={SUNRISE} max={SUNSET} value={minutes} valueText={readout} onChange={setMinutes}>
-        <div className="hw-sun-ground" aria-hidden="true" />
-        <svg className="hw-graphic hw-plot-fade" viewBox="0 0 336 87" preserveAspectRatio="none" aria-hidden="true">
-          <path d="M27 69 Q168 -47 309 69" fill="none" stroke="#ffe1a07a" strokeDasharray="2 4" vectorEffect="non-scaling-stroke" />
+        <svg className="hw-graphic" viewBox="0 0 336 87" preserveAspectRatio="none" aria-hidden="true">
+          <ChartEdgeFade box={[0, 0, 336, 87]}>
+            <path d="M27 69 Q168 -47 309 69" fill="none" stroke="#ffe1a07a" strokeDasharray="2 4" vectorEffect="non-scaling-stroke" />
+          </ChartEdgeFade>
         </svg>
-        <span className="hw-sun-marker" aria-hidden="true" style={{ top: `${sunY * 100}%` }} />
+        <span className="hw-sun-marker" aria-hidden="true" style={{ top: `${sunY * 100}%` }}><SunRays /></span>
       </Scrub>
       <div className="hw-between bw-muted hw-caption hw-sun-times">
         <span>Sunrise<strong>{formatHour(SUNRISE)}</strong></span>

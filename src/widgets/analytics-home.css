@@ -59,7 +59,7 @@
 .ah-bottom { justify-content: space-between; }
 .ah-controls { flex: none; }
 .ah-fill-svg { display: block; position: absolute; width: 100%; height: 100%; inset: 0; overflow: visible; pointer-events: none; }
-.ah-chart-fade, .ah-funnel-track::before, .ah-retention::before { mask-image: var(--bw-chart-edge-fade); }
+.ah-retention::before { mask-image: var(--bw-chart-edge-fade); }
 .ah-overlay-range { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: ew-resize; touch-action: pan-y; }
 :is(.ah-goal, .ah-energy-plot, .ah-wave, .ah-stock-plot, .ah-light-track):has(.ah-overlay-range:focus-visible) {
   outline: 2px solid var(--bw-focus-ring, var(--bw-accent));
@@ -93,8 +93,7 @@
 .ah-funnel { display: grid; height: 100%; grid-template-rows: repeat(4, minmax(20px, 1fr)); gap: 4px; }
 .ah-funnel .ah-funnel-row { display: grid; grid-template-columns: 64px minmax(0, 1fr) 87px; gap: 6px; text-align: left; border-radius: 6px; }
 .ah-funnel-row > :last-child { text-align: right; font-variant-numeric: tabular-nums; }
-.ah-funnel-track { position: relative; display: block; width: 100%; height: 17px; overflow: hidden; border-radius: 999px; }
-.ah-funnel-track::before { content: ''; position: absolute; inset: 0; background: rgb(255 255 255 / 10%); }
+.ah-funnel-track { display: block; width: 100%; height: 17px; overflow: hidden; border-radius: 999px; background: rgb(255 255 255 / 10%); }
 .ah-funnel-track > span { position: relative; display: block; min-width: 13px; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #eeedf7, #8898d2); }
 .ah-funnel-track > span::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: var(--bw-accent); opacity: 0; transition: opacity calc(170ms / var(--bw-speed, 1)) ease; }
 .ah-funnel-row[aria-pressed="true"] .ah-funnel-track > span::after { opacity: 1; }
@@ -110,28 +109,39 @@
 .ah-traffic-list i { display: block; width: 7px; height: 7px; border-radius: 50%; }
 .ah-traffic-list .ah-press > :last-child { color: var(--bw-dim); font-variant-numeric: tabular-nums; }
 
-.ah-goal { position: absolute; inset: auto 0 0; display: grid; width: min(200px, 100%, calc((100cqh - 64px) * 1.8)); aspect-ratio: 200 / 111; margin-inline: auto; justify-items: center; }
+.ah-goal-card .bw-body { display: grid; justify-items: center; align-items: end; container-type: size; padding-block-end: 6px; }
+.ah-goal { position: relative; display: grid; width: min(200px, 100%, 166.67cqh); aspect-ratio: 200 / 120; justify-items: center; }
 .ah-goal-svg { width: 100%; height: 100%; overflow: visible; }
 .ah-goal .ah-overlay-range { touch-action: none; cursor: grab; }
 .ah-goal .ah-overlay-range:active { cursor: grabbing; }
-.ah-goal-value { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); }
+.ah-goal-value { position: absolute; bottom: 5%; left: 50%; transform: translateX(-50%); }
 
 .ah-retention { position: relative; height: 100%; display: grid; grid-template-rows: repeat(5, minmax(0, 1fr)); gap: 0; }
 .ah-retention::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(rgb(255 255 255 / 3%), transparent); }
 .ah-retention-row { min-height: 0; display: grid; grid-template-columns: 33px repeat(8, minmax(0, 1fr)); align-items: stretch; gap: 4px; }
 .ah-retention-row > span:first-child { align-self: center; color: var(--bw-dim); font-size: 12px; }
-.ah-retention-row .ah-cohort { position: relative; border-radius: 6px; }
-.ah-cohort::after, .ah-cohort-empty::after { content: ''; position: absolute; inset: 4px 0; border-radius: 5px; background: rgb(246 249 247 / var(--ah-cell-alpha)); transition: background-color calc(160ms / var(--bw-speed, 1)) ease; }
-.ah-cohort::before { content: ''; position: absolute; inset: 2px -2px; border: 1px solid var(--bw-accent); border-radius: 8px; opacity: 0; transition: opacity calc(160ms / var(--bw-speed, 1)) ease; }
-.ah-cohort[aria-pressed="true"]::after { background: color-mix(in srgb, var(--bw-accent) 62%, #293525); }
-.ah-cohort[aria-pressed="true"]::before { opacity: 1; }
+.ah-retention-row .ah-cohort { position: relative; }
+.ah-cohort::after, .ah-cohort-empty::after {
+  content: '';
+  position: absolute;
+  inset: 4px 0;
+  border-radius: 5px;
+  background: rgb(246 249 247 / var(--ah-cell-alpha));
+  transition: background-color calc(160ms / var(--bw-speed, 1)) ease, border-color calc(160ms / var(--bw-speed, 1)) ease;
+}
+.ah-cohort::after { border: 1px solid transparent; }
+.ah-cohort[aria-pressed="true"]::after {
+  background: color-mix(in srgb, var(--bw-accent) 35%, #171821);
+  border-color: var(--bw-accent);
+}
+.ah-retention-row .ah-cohort:focus-visible { outline: none; }
+.bw-frame:not([data-pointer]) .ah-cohort:focus-visible::after { border: 2px solid var(--bw-white); }
+.bw-frame:not([data-pointer]) .ah-cohort:focus-visible:not([aria-pressed="true"])::after { background: #343641; }
 .ah-cohort-empty { position: relative; --ah-cell-alpha: .035; }
-.ah-retention-row .ah-cohort:focus-visible { outline-offset: -3px; }
 
 .ah-climate-card .ah-segments { --ah-segment-width: 46px; gap: 0; }
-.ah-climate-card .bw-header { min-height: 0; justify-content: flex-end; margin-bottom: 8px; }
-.ah-climate-card .bw-body { display: grid; grid-template-rows: minmax(0, 1fr) auto; }
-.ah-climate-card .ah-bottom { align-items: end; }
+.ah-climate-card .bw-header { min-height: 0; justify-content: flex-end; margin-bottom: 4px; }
+.ah-climate-card .bw-body { display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 6px; }
 .ah-climate-main {
   container-type: size;
   display: grid;
@@ -148,9 +158,11 @@
 }
 .ah-dial:active { cursor: grabbing; }
 .ah-dial-value { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
+.ah-dial-value .bw-dot-number { width: auto; height: clamp(14px, min(30cqw, 30cqh), 42px); }
+.ah-climate-footer { display: flex; justify-content: space-between; align-items: end; gap: 6px; }
 .ah-climate-readouts { display: flex; gap: 20px; }
-.ah-climate-readouts > span { display: flex; flex-direction: column; font-size: 15px; }
-.ah-climate-readouts small { color: var(--bw-dim); font-size: 12px; }
+.ah-climate-readouts > span { display: flex; flex-direction: column; font-size: 15px; line-height: 1.12; }
+.ah-climate-readouts small { color: var(--bw-dim); font-size: 12px; line-height: 1.2; }
 .bw-frame .ah-fan { width: 70px; min-height: 37px; padding: 0 10px; line-height: 1; background: rgb(255 255 255 / 14%); }
 @media (prefers-reduced-motion: no-preference) {
   .bw-frame:not([data-reduced="true"]) .ah-fan[aria-pressed="true"] svg {
@@ -171,15 +183,26 @@
 .ah-light-track > div { position: absolute; height: 100%; border-radius: inherit; background: #fff; }
 
 .ah-energy { display: grid; height: 100%; grid-template-rows: 36px minmax(0, 1fr) auto; gap: 8px; }
+.ah-energy > .ah-value-row { align-items: baseline; }
 .ah-energy-plot { position: relative; height: min(100%, clamp(38px, 31cqw, 112px)); align-self: end; }
 .ah-energy .bw-muted:last-child { white-space: nowrap; }
 
-.ah-timer-main { display: grid; justify-items: center; gap: 8px; }
-.ah-timer-main [role="timer"] { line-height: 0; }
-.ah-timer-main .bw-dot-number { width: auto; height: clamp(28px, calc(25cqh - 12px), 36px); }
-.ah-timer-main .ah-controls { gap: clamp(4px, 1.7cqw, 8px); }
-.ah-timer-main .bw-circle { --ah-timer-button: clamp(28px, calc((100cqw - 50px) / 4), 32px); width: var(--ah-timer-button); height: var(--ah-timer-button); }
-.ah-timer-chart { position: absolute; width: 100%; height: clamp(20px, calc(50cqh - 56px), 40px); bottom: 0; overflow: visible; pointer-events: none; }
+.ah-timer-card .bw-body { position: static; display: grid; align-content: end; justify-items: center; }
+.ah-timer-value {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  translate: -50% -50%;
+  width: max-content;
+  max-width: calc(100% - 2 * var(--bw-inset));
+  line-height: 0;
+}
+.ah-timer-value .bw-dot-number { width: auto; height: clamp(28px, calc(25cqh - 12px), 36px); }
+.ah-timer-controls { --ah-timer-gap: clamp(4px, 1.7cqw, 8px); gap: var(--ah-timer-gap); }
+.ah-timer-controls .bw-circle {
+  --ah-timer-button: clamp(24px, calc((100cqw - 2 * var(--bw-inset) - 3 * var(--ah-timer-gap)) / 4), var(--ah-timer-button-max, 32px));
+  width: var(--ah-timer-button);
+  height: var(--ah-timer-button);
+}
 
 .ah-lock { --ah-unlocked: #a8f4d2; height: 100%; display: grid; align-content: center; justify-items: center; gap: 2px; }
 .ah-lock-press {
@@ -247,14 +270,11 @@
 .ah-agenda > div:nth-child(2)::before { background: #e789bd; }
 .ah-agenda time { color: var(--bw-dim); font-size: 12px; font-variant-numeric: tabular-nums; }
 
-.ah-reminders-card .bw-body { display: grid; }
-.ah-reminders { display: grid; grid-template-rows: repeat(4, max-content); align-content: space-between; gap: 4px; }
-.ah-reminders .ah-press { justify-content: flex-start; border-radius: 6px; min-height: 24px; gap: 10px; }
-.ah-reminders .ah-press:first-child { padding-block-end: 6px; }
-.ah-reminders .ah-press:last-child { padding-block-start: 6px; }
+.ah-reminders { display: grid; gap: var(--ah-reminder-row-gap); }
+.ah-reminders .ah-press { justify-content: flex-start; align-items: flex-start; border-radius: 6px; min-height: var(--ah-reminder-row-height); gap: 10px; text-align: left; }
 .ah-check { width: 18px; height: 18px; flex: none; border: 1px solid rgb(255 255 255 / 42%); border-radius: 50%; display: grid; place-items: center; transition: background-color calc(160ms / var(--bw-speed, 1)) ease, border-color calc(160ms / var(--bw-speed, 1)) ease; }
 .ah-check > svg { opacity: 0; transform: scale(.6); transition: opacity calc(130ms / var(--bw-speed, 1)) ease, transform calc(180ms / var(--bw-speed, 1)) ease; }
-.ah-task { position: relative; transition: color calc(160ms / var(--bw-speed, 1)) ease; }
+.ah-task { position: relative; line-height: 18px; transition: color calc(160ms / var(--bw-speed, 1)) ease; }
 .ah-task::after { content: ''; position: absolute; inset: 50% 0 auto; height: 1px; background: currentColor; transform: scaleX(0); transform-origin: left; transition: transform calc(180ms / var(--bw-speed, 1)) ease; }
 .ah-reminders .ah-press[aria-checked="true"] .ah-check { color: #151810; background: var(--bw-accent); border-color: var(--bw-accent); }
 .ah-reminders .ah-press[aria-checked="true"] .ah-check > svg { opacity: 1; transform: scale(1); }
@@ -296,7 +316,7 @@
 .bw-frame .ah-funnel .ah-press:active,
 .bw-frame .ah-retention .ah-press:active { scale: 1; }
 
-/* A short card keeps the plot or dial alongside its readouts. */
+/* A short revenue card keeps the plot alongside its readouts. */
 @container bloom (height < 252px) and (width >= 290px) {
   .ah-revenue-card .bw-body {
     display: grid;
@@ -312,22 +332,20 @@
 }
 
 @container bloom (height < 252px) {
-  .ah-climate-card .bw-body {
-    grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr);
-    gap: 12px;
-  }
   .ah-dial { width: min(100cqw, 100cqh, 176px); }
-  .ah-dial-value .bw-dot-number { height: clamp(20px, min(24cqw, 24cqh), 36px); width: auto; }
-  .ah-climate-card .ah-bottom {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr) auto;
-    justify-items: start;
-    gap: 8px;
+  .bw-frame .ah-fan { min-height: 28px; }
+}
+
+@container bloom (height < 252px) and (width >= 340px) {
+  .ah-climate-card .bw-body {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: minmax(0, 1fr);
   }
+  .ah-climate-main { grid-area: 1 / 2; }
+  .ah-climate-footer { display: contents; }
+  .ah-climate-readouts { grid-area: 1 / 1; align-self: end; }
+  .ah-climate-footer .ah-fan { grid-area: 1 / 3; place-self: end; }
   .ah-climate-readouts { gap: 12px; }
-  .bw-frame .ah-fan { justify-self: end; min-height: 28px; }
 }
 
 @container bloom (width >= 290px) and (height >= 176px) {
@@ -355,9 +373,8 @@
   .ah-traffic { grid-template-columns: clamp(66px, 34cqw, 96px) minmax(0, 1fr); gap: 8px; padding-top: 0; }
   .ah-traffic-list .ah-press { column-gap: 4px; padding-inline: 4px; }
   .ah-retention-row { grid-template-columns: 26px repeat(8, minmax(0, 1fr)); gap: 2px; }
-  .ah-retention-row .ah-cohort::before { inset-inline: -1px; }
 
-  .ah-reminders .ah-press { gap: 6px; text-align: left; }
+  .ah-reminders .ah-press { gap: 6px; }
 
   .ah-song {
     display: grid;
@@ -380,11 +397,10 @@
   .ah-climate-card .bw-header { display: block; }
   .ah-climate-card .ah-segments { width: 100%; --ah-segment-width: calc((100% - 4px) / 3); }
   .ah-climate-card .ah-segments .ah-press { flex: 1 1 0; width: auto; }
-  .ah-climate-readouts { flex-direction: column; gap: 3px; }
-  .ah-climate-readouts > span { font-size: 13px; line-height: 1.12; }
-  .ah-climate-readouts small { font-size: 11px; }
-  .ah-climate-card .ah-bottom { gap: 3px; }
-  .bw-frame .ah-fan { width: auto; min-height: 26px; padding-inline: 6px; }
+  .ah-climate-readouts { gap: 6px; }
+  .ah-climate-readouts > span { font-size: 13px; }
+  .ah-climate-readouts small { font-size: 10px; }
+  .bw-frame .ah-fan { width: auto; min-height: 26px; padding-inline: 6px; gap: 4px; font-size: 12px; }
 
   .ah-song .ah-controls { gap: 4px; }
   .ah-song .bw-circle { width: 28px; height: 28px; }
@@ -416,7 +432,7 @@
   .ah-donut-caption small { font-size: 11px; }
   .ah-goal-card .bw-header { display: grid; grid-template-columns: minmax(0, 1fr); gap: 5px; }
   .ah-goal-card .bw-aside { white-space: normal; }
-  .ah-goal-value .bw-dot-number { width: auto; height: clamp(16px, 11cqw, 23px); }
+  .ah-goal-value .bw-dot-number { width: auto; height: clamp(16px, calc(11cqw + 3px), 23px); }
   .ah-calendar-month { display: none; }
   .ah-calendar-month-short { display: inline; }
   .ah-week .ah-press { height: 26px; }
@@ -428,23 +444,19 @@
 }
 
 @container bloom (width < 248px) and (height < 252px) {
-  .ah-climate-card .bw-body { grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
-  .ah-climate-card .ah-bottom { align-items: start; gap: 6px; }
-  .ah-dial { width: min(100cqw, 100cqh, 140px); }
   .ah-dial > svg > line:nth-of-type(even) { display: none; }
-  .ah-dial-value .bw-dot-number { height: 22px; }
-  .ah-climate-readouts { gap: 5px; }
-  .ah-climate-readouts > span { line-height: 1.05; }
-  .ah-climate-readouts small { line-height: 1; }
-  .bw-frame .ah-fan { min-height: 28px; padding-inline: 7px; }
 }
 
-@container bloom (width < 248px) and (height < 176px) {
-  .ah-climate-card .ah-bottom { gap: 4px; }
-  .ah-climate-readouts { gap: 1px; }
-  .ah-climate-readouts > span { font-size: 12px; line-height: 1; }
-  .ah-climate-readouts small { font-size: 10px; }
-  .bw-frame .ah-fan { min-height: 26px; padding-inline: 6px; }
+@container bloom (width < 172px) {
+  .ah-climate-readouts { gap: 4px; }
+  .bw-frame .ah-fan { padding-inline: 4px; }
+}
+
+@container bloom (width < 158px) {
+  .ah-climate-readouts > span { font-size: 12px; }
+  .ah-climate-readouts small { font-size: 9px; }
+  .bw-frame .ah-fan { width: 26px; height: 26px; }
+  .ah-fan-label { display: none; }
 }
 
 @container bloom (height < 176px) {
@@ -480,22 +492,12 @@
   .ah-user-chart { height: clamp(26px, 12cqw, 36px); }
   .ah-wave { --ah-wave-size: clamp(26px, 9cqw, 56px); }
 
-  .ah-timer-card .bw-body {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr) auto;
-    align-items: center;
-    justify-items: center;
-    gap: clamp(16px, 6cqh, 24px);
-  }
-  .ah-timer-main { gap: 10px; }
-  .ah-timer-main .bw-dot-number { width: auto; height: clamp(32px, 21cqw, 60px); }
-  .ah-timer-main .bw-circle { --ah-timer-button: clamp(28px, calc((100cqw - 50px) / 4), 40px); width: var(--ah-timer-button); height: var(--ah-timer-button); }
-  .ah-timer-chart { position: static; width: min(100%, 320px); height: clamp(36px, 15cqh, 62px); }
+  .ah-timer-card { --ah-timer-button-max: 40px; }
+  .ah-timer-value .bw-dot-number { height: clamp(32px, 21cqw, 60px); }
 }
 
 @container bloom (height >= 252px) and (width >= 290px) {
-  .ah-goal { width: min(252px, 100%, calc((100cqh - 64px) * 1.8)); }
+  .ah-goal { width: min(252px, 100%, 166.67cqh); }
   .ah-traffic { grid-template-columns: clamp(104px, 38cqw, 144px) minmax(0, 1fr); }
   .ah-traffic-list .ah-press { min-height: 30px; }
 }

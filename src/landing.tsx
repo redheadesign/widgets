@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { ArrowLeft, ChartNoAxesCombined, Github, Grid2X2, HeartPulse, House, Layers3, Send, Star, Sun, type LucideIcon } from 'lucide-react';
-import { BloomWidget, dimensions, tones, widgetCatalog, type Category, type Tone } from './widgets';
+import { WidgetFrame, dimensions, tones, widgetCatalog, type Category, type Tone } from './widgets';
+import { previewWidgets } from './widgets/previews';
 import { packBento, randomFrom, shuffle, type TileFit } from './bento-layout';
 import './landing.css';
 
@@ -22,11 +23,13 @@ const filters: { id: 'all' | Category; label: string; icon: LucideIcon }[] = [
 ];
 const palette = (Object.keys(tones) as Tone[]).filter(tone => tone !== 'amber' && tone !== 'olive');
 const accents = ['#bfe4ee', '#d7caff', '#85f2dd', '#ffaac6', '#a6caff', '#ffd5e9', '#f3f3fd', '#ffa18a', '#a8f1a0', '#84dfff'];
-const landingWidgets = widgetCatalog.filter(({ id }) => id !== 'calendar' && id !== 'traffic');
+const hiddenWidgets = new Set(['calendar', 'traffic', 'hourly']);
+const landingWidgets = [...widgetCatalog.filter(({ id }) => !hiddenWidgets.has(id)), ...previewWidgets];
+const squareWidgets = new Set(['clock', 'steps', 'users', ...previewWidgets.map(({ id }) => id)]);
 const wideWidgets = new Set(['music', 'glucose', 'funnel']);
 const portraitWidgets = new Set(['hydration', 'breathing', 'lock', 'lights', 'weather', 'thermostat']);
 const preferredFit = (id: string): TileFit | undefined => {
-  if (id === 'clock') return 'square';
+  if (squareWidgets.has(id)) return 'square';
   if (id === 'timer') return 'short';
   if (wideWidgets.has(id)) return 'wide';
   if (portraitWidgets.has(id)) return 'portrait';
@@ -84,7 +87,7 @@ export function BentoLanding() {
     const tiles = packBento(cards.length, columns, seed ^ columns, {
       wide: cards.filter(card => preferredFit(card.widget.id) === 'wide').length,
       short: cards.some(card => preferredFit(card.widget.id) === 'short'),
-      square: cards.some(card => preferredFit(card.widget.id) === 'square'),
+      square: cards.filter(card => preferredFit(card.widget.id) === 'square').length,
       portrait: cards.filter(card => preferredFit(card.widget.id) === 'portrait').length,
     });
     const waiting = [...cards];
@@ -130,7 +133,7 @@ export function BentoLanding() {
               gridColumn: `${tile.column + 1} / span ${tile.width}`,
               gridRow: `${tile.row + 1} / span ${tile.height}`,
             }}>
-              <BloomWidget id={widget.id} tone={tone} settings={settings} fill />
+              <WidgetFrame definition={widget} tone={tone} settings={settings} fill />
             </div>
           ))}
         </div>

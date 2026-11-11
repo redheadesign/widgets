@@ -53,7 +53,9 @@ const cases = {
   },
   steps: async frame => {
     await pressed(frame, 'Wednesday');
-    await visible(frame, /Wednesday · 96%/);
+    const progress = frame.getByRole('progressbar', { name: 'Wednesday step goal' });
+    await progress.waitFor();
+    assert.equal(await progress.getAttribute('aria-valuetext'), '96% of goal');
   },
   sleep: (frame, page) => drag(frame, page, 'Sleep stage'),
   'lung-capacity': async frame => {
@@ -88,7 +90,17 @@ const cases = {
     await click(frame, /NE wind/);
     await button(frame, /^E wind/).waitFor();
   },
-  sun: (frame, page) => drag(frame, page, 'Time of day', .94),
+  sun: async (frame, page) => {
+    const slider = frame.getByRole('slider', { name: 'Time of day' });
+    const sun = frame.locator('.hw-sun');
+    const strength = () => sun.evaluate(element => Number(element.style.getPropertyValue('--hw-sun-radiance')));
+    await slider.press('Home');
+    assert.equal(await strength(), 0);
+    await drag(frame, page, 'Time of day', .5);
+    assert.ok(await strength() > .9);
+    await slider.press('End');
+    assert.equal(await strength(), 0);
+  },
   revenue: async frame => {
     await pressed(frame, 'Month');
     await visible(frame, '$186,940');
@@ -126,11 +138,13 @@ const cases = {
     await pressed(frame, /Friday, November/);
     await visible(frame, 'Sprint planning');
   },
-  reminders: async frame => {
+  reminders: async (frame, _page, size) => {
+    const count = size === '2x2' ? 10 : 4;
+    assert.equal(await frame.getByRole('checkbox').count(), count);
     const task = frame.getByRole('checkbox', { name: 'Call the dentist' });
     await task.click();
     assert.equal(await task.getAttribute('aria-checked'), 'true');
-    await visible(frame, '2 of 4');
+    assert.equal(await frame.getByRole('status').textContent(), `2 of ${count}`);
   },
   music: async frame => {
     await click(frame, 'Next track');
@@ -198,7 +212,7 @@ try {
         result.before = await inspectLayout(frame);
         assert.deepEqual(result.before.dimensions, dimensions);
         assert(result.before.controls > 0, 'No visible controls');
-        await cases[id](frame, page);
+        await cases[id](frame, page, size);
         result.action = 'passed';
         result.after = await inspectLayout(frame);
         for (const state of [result.before, result.after]) {
