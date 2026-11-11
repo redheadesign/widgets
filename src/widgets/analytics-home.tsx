@@ -515,7 +515,7 @@ export function TimerWidget() {
   const after = Math.min(before + 1, timerTicks.length - 1);
   const markerHeight = timerTicks[before] + (timerTicks[after] - timerTicks[before]) * (playhead - before);
   return (
-    <WidgetCard title="Timer" icon="timer" aside={<span className="bw-muted" role="status">{seconds === 0 ? 'Done' : active && !paused ? 'Running' : 'Paused'}</span>}>
+    <WidgetCard className="ah-timer-card" title="Timer" icon="timer" aside={<span className="bw-muted" role="status">{seconds === 0 ? 'Done' : active && !paused ? 'Running' : 'Paused'}</span>}>
       <div className="ah-timer-main">
         <div role="timer"><DotNumber value={durationDigits(seconds)} size={36} /></div>
         <div className="ah-controls">

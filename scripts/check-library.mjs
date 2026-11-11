@@ -62,12 +62,17 @@ async function checkPage(browser, server) {
     assert((await audio.evaluate(element => element.currentTime)) >= 41);
     await music.getByRole('button', { name: 'Pause track' }).click();
     assert(await audio.evaluate(element => element.paused));
+    const covers = new Set();
     for (let i = 0; i < 5; i++) {
       const src = await audio.evaluate(element => element.src);
       const status = await page.evaluate(async url => (await fetch(url, { method: 'HEAD' })).headers.get('content-type'), src);
       assert.match(status ?? '', /^audio\//, `${src} must resolve to audio`);
+      const disc = music.locator(`.ah-disc[data-track="${i}"]`);
+      assert.equal(await disc.getAttribute('data-spinning'), 'false');
+      covers.add(await disc.evaluate(element => getComputedStyle(element).backgroundImage));
       await music.getByRole('button', { name: 'Next track' }).click();
     }
+    assert.equal(covers.size, 5, 'Every track must have its own cover');
     assert(await music.getByText('Gymnopédie No. 1', { exact: true }).isVisible());
     assert.deepEqual(errors, []);
   } finally {

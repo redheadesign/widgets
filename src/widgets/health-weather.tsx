@@ -108,7 +108,7 @@ function HeartRate() {
           <mask id={maskId}><rect width="336" height="60" fill={`url(#${fadeId})`} /></mask>
         </defs>
         <g mask={`url(#${maskId})`}>
-          <path className="hw-heart-trace" d={HEART_TRACE} stroke="var(--bw-accent)" strokeWidth="1.5" strokeLinejoin="round" fill="none" />
+          <path className="hw-heart-trace" d={HEART_TRACE} stroke="var(--bw-accent)" strokeWidth="1.5" strokeLinejoin="round" vectorEffect="non-scaling-stroke" fill="none" />
         </g>
       </svg>
     </div>
@@ -294,6 +294,12 @@ function Glucose() {
   </WidgetCard>;
 }
 
+const BREATH_POINTS = [
+  { x: 50, y: 15, r: 4.5 }, { x: 78, y: 28, r: 6 }, { x: 83, y: 58, r: 4 },
+  { x: 64, y: 81, r: 6.5 }, { x: 35, y: 81, r: 3.5 }, { x: 18, y: 61, r: 5 },
+  { x: 24, y: 30, r: 6 },
+];
+
 function Breathing() {
   const { reduce, duration } = useWidgetMotion();
   const { elapsed, active, toggle } = useProgress(70, 60000);
@@ -307,10 +313,17 @@ function Breathing() {
   return <WidgetCard title="Breathe" icon="flower-2">
     <div className="hw-stack hw-breathing">
       <div className="hw-breathe-visual" aria-hidden="true">
-        <motion.div className="hw-breathe-orb" initial={false} animate={{ scale: 1 + .32 * volume }}
-          style={{ '--hw-breathe-energy': volume } as CSSProperties} transition={{ duration: duration(.075), ease: 'linear' }}>
-          <span className="hw-breathe-surface" />
-        </motion.div>
+        <motion.svg className="hw-breathe-orbit" viewBox="0 0 100 100" initial={false}
+          animate={{ scale: 1 + .26 * volume }} transition={{ duration: duration(.075), ease: 'linear' }}>
+          <g className="hw-breathe-track">
+            {BREATH_POINTS.map(({ x, y, r }, index) => <circle key={x} className="hw-breathe-point"
+              cx={x} cy={y} r={r * (1 + .28 * volume)} style={{ '--hw-point-delay': `${index * -.34}s` } as CSSProperties} />)}
+          </g>
+          <g className="hw-breathe-track hw-breathe-track--inner">
+            <circle className="hw-breathe-point" cx="45" cy="33" r={3.4 + 1.4 * volume} />
+            <circle className="hw-breathe-point" cx="60" cy="62" r={4.2 + 1.6 * volume} />
+          </g>
+        </motion.svg>
       </div>
       <div className="hw-between"><span className="hw-caption" aria-hidden={active || undefined}>{status}</span><span className="bw-visually-hidden" role="status">{active ? phase : seconds === 60 ? 'Session complete' : ''}</span><Circle icon={active ? 'pause' : 'play'} label={active ? 'Stop breathing session' : 'Start one-minute breathing session'} onClick={toggle} light /></div>
     </div>
@@ -480,8 +493,11 @@ function Wind() {
           return <circle key={i} cx={dot.x} cy={dot.y} r={i % 12 === 0 ? 2.1 : .82} fill="white" opacity={i % 12 === 0 ? 1 : .43} />;
         })}<g className="hw-wind-needle" style={{ rotate: `${reading.degrees}deg` }}>
           <path d="M11 0 L-8 -7 L-5 0 L-8 7Z" transform="translate(80 52)" fill="var(--bw-accent)" />
-        </g></svg>
-        <span className="hw-north">N</span><span className="hw-wind-value">{reading.speed}<small>km/h</small></span>
+        </g>
+          <text className="hw-wind-north" x="52" y="20">N</text>
+          <text className="hw-wind-value" x="52" y="48">{reading.speed}</text>
+          <text className="hw-wind-unit" x="52" y="66">km/h</text>
+        </svg>
       </button>
       <p className="hw-center hw-caption">{reading.direction} · gusts of {reading.gusts} km/h</p>
     </div>

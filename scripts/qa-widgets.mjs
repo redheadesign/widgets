@@ -171,6 +171,7 @@ async function checkMotion() {
     hyd.search = '?widget=hydration';
     await tab.goto(hyd.href, { waitUntil: 'domcontentloaded' });
     const glass = tab.getByRole('button', { name: 'Add a glass of water' });
+    await glass.waitFor();
     const water = tab.locator('.hw-water');
     const waves = tab.locator('.hw-water-wave');
     assert.equal(await waves.count(), 3);
@@ -209,9 +210,12 @@ async function checkMotion() {
     await tab.locator('iframe[data-fitted="true"]').waitFor({ timeout: 6000 });
     const inner = iframe.contentFrame().locator('.card');
     const checkFit = async () => {
+      const expectedWidth = await tab.locator('.stage-work').evaluate(el => Math.min(320, el.clientWidth - 34));
+      await tab.waitForFunction(width => document.querySelector('.telegram-stage iframe')?.clientWidth === width, expectedWidth);
       const cardHeight = await inner.evaluate(el => el.getBoundingClientRect().height);
+      await tab.waitForFunction(height => document.querySelector('.telegram-stage iframe')?.clientHeight === Math.ceil(height), cardHeight);
       const frame = await iframe.evaluate(el => ({ width: el.clientWidth, height: el.clientHeight }));
-      assert.equal(frame.width, 320);
+      assert.equal(frame.width, expectedWidth);
       assert(frame.height - cardHeight >= 0 && frame.height - cardHeight < 1.1, 'Telegram frame has a visible gutter');
     };
     await checkFit();

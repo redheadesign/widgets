@@ -29,12 +29,20 @@ export const tones = {
   blue: '#235d9c', indigo: '#3539b1', violet: '#672ca6', olive: '#777820',
   ember: '#a4381c', amber: '#9a611b', green: '#17806a', cyan: '#187e9b',
   teal: '#236e61', plum: '#996264',
+  azure: '#285ebc', cobalt: '#4231bf', mint: '#178951', orchid: '#9527ac',
+  coral: '#c44a3d', smoke: '#55555c', slate: '#3d4853',
 } as const;
 
-const toneSurfaces: Partial<Record<Tone, string>> = {
+const toneSurfaces: Record<Tone, string> = {
   red: 'heart-rate', graphite: 'clock', pink: 'lung-capacity', rose: 'breathing',
   blue: 'weather-madrid', indigo: 'sleep', violet: 'revenue', olive: 'air-quality',
-  ember: 'uv-index', amber: 'sun', green: 'thermostat', teal: 'wind', plum: 'glucose',
+  ember: 'uv-index', amber: 'sun', green: 'thermostat', cyan: 'thermostat', teal: 'wind', plum: 'glucose',
+  azure: 'thermostat', cobalt: 'thermostat', mint: 'thermostat', orchid: 'revenue', coral: 'uv-index', smoke: 'lock', slate: 'weather-madrid',
+};
+const toneSurfaceFilters: Partial<Record<Tone, string>> = {
+  cyan: 'hue-rotate(42deg)', azure: 'hue-rotate(78deg)', cobalt: 'hue-rotate(113deg)',
+  mint: 'hue-rotate(-35deg)', orchid: 'hue-rotate(30deg)', coral: 'hue-rotate(-16deg)',
+  smoke: 'saturate(.12)', slate: 'saturate(.22) brightness(.86)',
 };
 
 export const dimensions: Record<Size, [number, number]> = { small: [176, 176], wide: [368, 176], large: [368, 368] };
@@ -193,14 +201,15 @@ export function WidgetFrame({ definition, settings, tone, children, size = defin
   const palette = tone ?? definition.tone;
   const [width, height] = dimensions[size];
   const opts = { ...defaultWidgetSettings, ...settings };
+  const filters = [tone ? toneSurfaceFilters[tone] : undefined, opts.glow > 100 ? `brightness(${opts.glow / 100})` : undefined];
   const feedback = useRef<HTMLDivElement>(null);
   const frameStyle = {
     ...style,
     '--bw-width': `${width}px`, '--bw-height': `${height}px`,
     '--bw-tint': tones[palette], '--bw-accent': opts.accent || '#e4f765',
     '--bw-glow': opts.glow / 100, '--bw-speed': opts.speed,
-    '--bw-light-filter': opts.glow > 100 ? `brightness(${opts.glow / 100})` : 'none',
-    '--bw-surface': referenceSurface(tone ? toneSurfaces[tone] ?? '' : definition.id),
+    '--bw-light-filter': filters.filter(Boolean).join(' ') || 'none',
+    '--bw-surface': referenceSurface(tone ? toneSurfaces[tone] : definition.id),
   } as CSSProperties;
   const Component = definition.Component;
   function press(target: EventTarget | null, point?: [number, number]) {

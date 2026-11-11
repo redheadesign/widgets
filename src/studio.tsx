@@ -23,6 +23,7 @@ const toneNames: Record<Tone, string> = {
   red: 'Красный', graphite: 'Графит', pink: 'Фуксия', rose: 'Малина', blue: 'Синий',
   indigo: 'Индиго', violet: 'Фиолетовый', olive: 'Оливковый', ember: 'Терракота',
   amber: 'Янтарный', green: 'Изумрудный', cyan: 'Голубой', teal: 'Бирюзовый', plum: 'Сливовый',
+  azure: 'Лазурный', cobalt: 'Кобальтовый', mint: 'Мятный', orchid: 'Орхидейный', coral: 'Коралловый', smoke: 'Дымчатый', slate: 'Сланцевый',
 };
 const sizeNames = { small: '1 × 1', wide: '2 × 1', large: '2 × 2' };
 const sizeParams: Record<Size, string> = { small: '1x1', wide: '2x1', large: '2x2' };
@@ -205,7 +206,6 @@ function Inspector({ item, settings, update, tone, changeTone, reset, target, do
           onClick={() => update({ speed })}>{numberFmt.format(speed)}×</button>)}
       </div>
       <Toggle title="Меньше движения" on={settings.reducedMotion} change={reducedMotion => update({ reducedMotion })} />
-      <p className="field-help">Отключает декоративные эффекты. Кнопки и таймеры остаются активными.</p>
       {target === 'web' && frameReviewIds.has(item.id) && !settings.reducedMotion && (
         <details className="frame-review">
           <summary>Разбор по кадрам</summary>

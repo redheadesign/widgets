@@ -1,25 +1,33 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { flushSync } from 'react-dom';
-import { Github, Moon, Send, Star, Sun } from 'lucide-react';
-import { BloomWidget, widgetCatalog, type Category, type Tone } from './widgets';
-import { packBento, randomFrom, shuffle } from './bento-layout';
+import { ChartNoAxesCombined, Github, Grid2X2, HeartPulse, House, Layers3, Moon, Send, Star, Sun, type LucideIcon } from 'lucide-react';
+import { BloomWidget, tones, widgetCatalog, type Category, type Tone } from './widgets';
+import { packBento, randomFrom, shuffle, type TileFit } from './bento-layout';
 import './landing.css';
 
 const repository = 'redheadesign/widgets';
 const telegram = 'https://t.me/redheadesign';
 const themeKey = 'redheadesign:theme';
 const gap = 12;
-const filters: { id: 'all' | Category; label: string }[] = [
-  { id: 'all', label: 'Все' },
-  { id: 'analytics', label: 'Аналитика' },
-  { id: 'health', label: 'Здоровье' },
-  { id: 'weather', label: 'Погода' },
-  { id: 'home', label: 'Дом' },
-  { id: 'everyday', label: 'На каждый день' },
+const filters: { id: 'all' | Category; label: string; icon: LucideIcon }[] = [
+  { id: 'all', label: 'Все', icon: Grid2X2 },
+  { id: 'analytics', label: 'Аналитика', icon: ChartNoAxesCombined },
+  { id: 'health', label: 'Здоровье', icon: HeartPulse },
+  { id: 'weather', label: 'Погода', icon: Sun },
+  { id: 'home', label: 'Дом', icon: House },
+  { id: 'everyday', label: 'На каждый день', icon: Layers3 },
 ];
-const palette: Tone[] = ['red', 'graphite', 'pink', 'rose', 'blue', 'indigo', 'violet', 'olive', 'ember', 'amber', 'green', 'teal', 'plum'];
-const accents = ['#e4f765', '#d7caff', '#85f2dd', '#ffaac6', '#a6caff', '#ffd393'];
+const palette = (Object.keys(tones) as Tone[]).filter(tone => tone !== 'amber' && tone !== 'olive');
+const accents = ['#bfe4ee', '#d7caff', '#85f2dd', '#ffaac6', '#a6caff', '#ffd5e9', '#f3f3fd', '#ffa18a', '#a8f1a0', '#84dfff'];
 type Theme = 'light' | 'dark';
+const wideWidgets = new Set(['music', 'glucose', 'funnel']);
+const portraitWidgets = new Set(['hydration', 'breathing', 'lock', 'lights', 'clock', 'weather', 'thermostat']);
+const preferredFit = (id: string): TileFit | undefined => {
+  if (id === 'timer') return 'short';
+  if (wideWidgets.has(id)) return 'wide';
+  if (portraitWidgets.has(id)) return 'portrait';
+  return undefined;
+};
 
 function initialTheme(): Theme {
   try {
@@ -59,10 +67,9 @@ function ThemeSwitch({ theme, change }: { theme: Theme; change: (theme: Theme) =
     }
   }
   return (
-    <button className="bento-theme" type="button" role="switch" aria-checked={theme === 'dark'}
+    <button className="bento-link bento-theme" type="button" role="switch" aria-checked={theme === 'dark'}
       aria-label="Тёмная тема" onClick={event => void toggle(event.currentTarget)}>
-      <Moon size={13} aria-hidden="true" /><Sun size={13} aria-hidden="true" />
-      <span className="bento-theme-thumb" aria-hidden="true" />
+      {theme === 'dark' ? <Sun size={18} aria-hidden="true" /> : <Moon size={18} aria-hidden="true" />}
     </button>
   );
 }
@@ -95,7 +102,7 @@ export function BentoLanding() {
   useLayoutEffect(() => {
     const node = grid.current!;
     function measure() {
-      setColumnLimit(Math.max(1, Math.floor((node.clientWidth + gap) / (160 + gap))));
+      setColumnLimit(Math.min(5, Math.max(1, Math.floor((node.clientWidth + gap) / (160 + gap)))));
     }
     measure();
     const observer = new ResizeObserver(measure);
@@ -110,25 +117,43 @@ export function BentoLanding() {
 
   const deck = useMemo(() => {
     const random = randomFrom(seed);
-    return shuffle(widgetCatalog, random).map(widget => ({
-      widget, tone: palette[Math.floor(random() * palette.length)],
-      settings: { accent: accents[Math.floor(random() * accents.length)] },
+    const backgrounds = shuffle(palette, random);
+    const highlights = shuffle(accents, random);
+    return shuffle(widgetCatalog, random).map((widget, index) => ({
+      widget, tone: backgrounds[index % backgrounds.length],
+      settings: { accent: highlights[index % highlights.length] },
     }));
   }, [seed]);
   const cards = useMemo(() => deck.filter(card => filter === 'all' || card.widget.category === filter), [deck, filter]);
   const columns = Math.min(columnLimit, cards.length);
-  const tiles = useMemo(() => packBento(cards.length, columns, seed ^ columns), [cards.length, columns, seed]);
+  const placements = useMemo(() => {
+    const tiles = packBento(cards.length, columns, seed ^ columns, {
+      wide: cards.filter(card => preferredFit(card.widget.id) === 'wide').length,
+      short: cards.some(card => preferredFit(card.widget.id) === 'short'),
+      portrait: cards.filter(card => preferredFit(card.widget.id) === 'portrait').length,
+    });
+    const waiting = [...cards];
+    const reserved = new Map<number, typeof cards[number]>();
+    tiles.forEach((tile, index) => {
+      if (!tile.fit) return;
+      const match = waiting.findIndex(card => preferredFit(card.widget.id) === tile.fit);
+      if (match !== -1) reserved.set(index, waiting.splice(match, 1)[0]);
+    });
+    return tiles.map((tile, index) => ({ tile, ...(reserved.get(index) ?? waiting.shift()!) }));
+  }, [cards, columns, seed]);
 
   return (
     <div className="bento-page" data-theme={theme}>
       <header className="bento-header">
         <a className="bento-brand" href={window.location.href} aria-label="Виджеты, новая раскладка">
-          <img src={`${import.meta.env.BASE_URL}redheadesign.svg`} alt="" width="24" height="24" />
+          <img src={`${import.meta.env.BASE_URL}redheadesign.svg`} alt="" width="30" height="30" />
           <span>Виджеты</span>
         </a>
         <nav className="bento-nav" aria-label="Категории виджетов">
-          {filters.map(({ id, label }) => (
-            <button type="button" key={id} aria-pressed={filter === id} onClick={() => setFilter(id)}>{label}</button>
+          {filters.map(({ id, label, icon: Icon }) => (
+            <button type="button" key={id} aria-label={label} title={label} aria-pressed={filter === id} onClick={() => setFilter(id)}>
+              <Icon size={18} aria-hidden="true" /><span>{label}</span>
+            </button>
           ))}
         </nav>
         <div className="bento-actions">
@@ -141,8 +166,7 @@ export function BentoLanding() {
       </header>
       <main className="bento-grid" ref={grid} aria-label="Виджеты"
         style={{ '--bento-columns': columns, '--bento-gap': `${gap}px` } as CSSProperties}>
-        {cards.map(({ widget, tone, settings }, index) => {
-          const tile = tiles[index];
+        {placements.map(({ widget, tone, settings, tile }) => {
           return (
             <div className="bento-tile" key={widget.id} style={{
               gridColumn: `${tile.column + 1} / span ${tile.width}`,

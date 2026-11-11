@@ -313,9 +313,14 @@
   .ah-climate-card .ah-bottom { gap: 3px; }
   .bw-frame .ah-fan { width: auto; min-height: 26px; padding-inline: 6px; }
 
+  .ah-song .ah-controls { gap: 4px; }
+  .ah-song .bw-circle { width: 28px; height: 28px; }
+}
+
+@container bloom (width < 318px) and (height < 252px) {
   .ah-timer-main { flex-wrap: wrap; gap: 4px; }
-  .ah-timer-main .ah-controls, .ah-song .ah-controls { gap: 4px; }
-  .ah-timer-main .bw-circle, .ah-song .bw-circle { width: 28px; height: 28px; }
+  .ah-timer-main .ah-controls { gap: 4px; }
+  .ah-timer-main .bw-circle { width: 28px; height: 28px; }
   .ah-timer-chart { height: min(40px, calc(100cqh - 132px)); }
 }
 
@@ -368,12 +373,46 @@
   .ah-agenda { padding-top: 6px; }
 }
 
+@container bloom (height >= 252px) {
+  .ah-revenue-card .bw-body,
+  .bw-card:has(.ah-song) .bw-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .ah-revenue-chart {
+    position: relative;
+    inset: auto;
+    flex: none;
+    height: clamp(70px, 34cqw, 136px);
+    margin-block-start: clamp(12px, 4cqh, 24px);
+  }
+  .ah-energy { grid-template-rows: 32px clamp(38px, 27cqw, 112px) auto; align-content: center; }
+  .bw-card:has(.ah-funnel, .ah-retention, .ah-stock-plot, .ah-user-chart) .bw-body { display: grid; align-content: center; }
+  .ah-funnel { height: clamp(112px, 32cqw, 152px); }
+  .ah-retention { height: clamp(116px, 33cqw, 200px); }
+  .ah-stock-plot { height: clamp(74px, 29cqw, 136px); }
+  .ah-user-chart { position: static; height: 32px; margin-block-start: 14px; }
+  .ah-wave { height: clamp(26px, 9cqw, 56px); }
+
+  .ah-timer-card .bw-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-content: center;
+    justify-items: center;
+    gap: clamp(16px, 6cqh, 24px);
+  }
+  .ah-timer-main { display: grid; justify-items: center; gap: clamp(12px, 4cqh, 18px); }
+  .ah-timer-main .bw-dot-number { width: auto; height: clamp(32px, 21cqw, 60px); }
+  .ah-timer-main .ah-controls { gap: clamp(4px, 1.7cqw, 8px); }
+  .ah-timer-main .bw-circle { --ah-timer-button: clamp(28px, calc((100cqw - 50px) / 4), 40px); width: var(--ah-timer-button); height: var(--ah-timer-button); }
+  .ah-timer-chart { position: static; width: min(100%, 320px); height: clamp(36px, 15cqh, 62px); }
+}
+
 @container bloom (height >= 252px) and (width >= 290px) {
   .ah-goal { width: min(252px, 100%, calc((100cqh - 64px) * 1.8)); }
   .ah-traffic { grid-template-columns: clamp(104px, 38cqw, 144px) minmax(0, 1fr); }
   .ah-traffic-list .ah-press { min-height: 30px; }
-  .ah-timer-chart { height: min(50%, 118px); }
-  .ah-wave { height: min(38cqh, 96px); }
 }
 
 @media (hover: hover) {

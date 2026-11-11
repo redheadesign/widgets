@@ -6,6 +6,7 @@ import { chromium } from 'playwright-core';
 const url = new URL(process.argv[2] ?? 'http://localhost:5173/widgets/');
 const output = new URL('../qa/run/', import.meta.url);
 const widths = [320, 390, 768, 1440, 1920];
+const seeds = [1, 13, 42, 77, 169, 277, 904, 2026];
 const categories = {
   'Аналитика': ['revenue', 'users', 'funnel', 'traffic', 'goal', 'retention'],
   'Здоровье': ['heart-rate', 'activity', 'steps', 'sleep', 'lung-capacity', 'hydration', 'glucose', 'breathing'],
@@ -34,7 +35,7 @@ try {
       const grid = document.querySelector('.bento-grid');
       if (!grid || grid.children.length !== count) return false;
       const gap = Number.parseFloat(getComputedStyle(grid).columnGap);
-      const columns = Math.max(1, Math.floor((grid.clientWidth + gap) / (160 + gap)));
+      const columns = Math.min(5, Math.max(1, Math.floor((grid.clientWidth + gap) / (160 + gap))));
       return Number(grid.style.getPropertyValue('--bento-columns')) === Math.min(count, columns);
     }, expected.length);
     const data = await grid.evaluate(element => {
@@ -45,6 +46,7 @@ try {
       const origin = element.getBoundingClientRect();
       const cells = new Set();
       const defects = [];
+      if (rows.some(row => Math.abs(row - cols[0]) > 1)) defects.push('base cells are not square');
       const offsets = lengths => lengths.map((_, i) => lengths.slice(0, i).reduce((sum, size) => sum + size + gap, 0));
       const xs = offsets(cols);
       const ys = offsets(rows);
@@ -59,6 +61,13 @@ try {
         const height = Number(tile.style.gridRowEnd.split(' ')[1]);
         const bounds = tile.getBoundingClientRect();
         const card = frame.querySelector('.bw-card').getBoundingClientRect();
+        if (cols.length > 1 && ['funnel', 'glucose', 'music'].includes(id) && (width !== 2 || height !== 1)) {
+          defects.push(id + ': needs a 2×1 tile');
+        }
+        if (id === 'timer' && height !== 1) defects.push(id + ': needs a one-row tile');
+        if (width === 1 && height === 2 && !['hydration', 'breathing', 'lock', 'lights', 'clock', 'weather', 'thermostat'].includes(id)) {
+          defects.push(id + ': is not eligible for a portrait tile');
+        }
         if (tile.children.length !== 1 || !frame.matches('.bw-frame') ||
           [...tile.childNodes].some(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim())) {
           defects.push(id + ': extra tile content');
@@ -179,7 +188,10 @@ try {
 
   await page.setViewportSize({ width: 1440, height: 960 });
   const before = await measure(all, '1440px · before reload');
-  assert.deepEqual(before.tiles.map(tile => tile.id), initial.tiles.map(tile => tile.id), 'Resize changes shuffled order');
+  const colors = (tiles, key) => Object.fromEntries(tiles.map(tile => [tile.id, tile[key]]));
+  for (const color of ['tint', 'accent']) {
+    assert.deepEqual(colors(before.tiles, color), colors(initial.tiles, color), 'Resize changes assigned ' + color);
+  }
   assert.equal(await theme.getAttribute('aria-checked'), 'true');
   await theme.click();
   await page.waitForFunction(() => document.querySelector('.bento-page')?.dataset.theme === 'light');
@@ -188,7 +200,6 @@ try {
   const after = await measure(all, '1440px · after reload');
   assert.notDeepEqual(after.tiles.map(tile => tile.id), before.tiles.map(tile => tile.id), 'Reload keeps order');
   assert.notDeepEqual(after.tiles.map(tile => tile.layout), before.tiles.map(tile => tile.layout), 'Reload keeps grid layout');
-  const colors = (tiles, key) => Object.fromEntries(tiles.map(tile => [tile.id, tile[key]]));
   for (const color of ['tint', 'accent']) {
     assert(after.tiles.every(tile => tile[color]), 'Missing ' + color);
     assert.notDeepEqual(colors(after.tiles, color), colors(before.tiles, color), 'Reload keeps ' + color + ' colors');
@@ -198,8 +209,64 @@ try {
   await page.reload();
   assert.equal(await theme.getAttribute('aria-checked'), 'true');
   assert.equal(await filter('Все').getAttribute('aria-pressed'), 'true');
+
+  await page.addInitScript(() => {
+    const seed = new URL(location.href).searchParams.get('qa-seed');
+    if (seed === null) return;
+    const getRandomValues = crypto.getRandomValues.bind(crypto);
+    crypto.getRandomValues = values => {
+      if (!(values instanceof Uint32Array) || values.length !== 1) return getRandomValues(values);
+      values[0] = Number(seed);
+      return values;
+    };
+  });
+  for (const width of [390, 1440]) {
+    await page.setViewportSize({ width, height: 960 });
+    for (const seed of seeds) {
+      const fixture = new URL(url);
+      fixture.searchParams.set('qa-seed', String(seed));
+      await page.goto(fixture.href, { waitUntil: 'domcontentloaded' });
+      await measure(all, width + 'px · seed ' + seed);
+      await page.evaluate(() => document.fonts.ready);
+      await page.screenshot({ fullPage: true, path: fileURLToPath(new URL('landing-stress-' + width + '-' + seed + '.png', output)) });
+    }
+    console.log(width + 'px · ' + seeds.length + ' reproducible layouts captured');
+  }
+
+  for (const [width, height] of [[176, 364], [364, 364], [266, 266], [720, 720]]) {
+    await page.setViewportSize({ width, height });
+    const fixture = new URL(url);
+    fixture.search = '?embed=timer&fit=container&reduce=1';
+    await page.goto(fixture.href);
+    const timer = page.locator('[data-widget="timer"]');
+    await timer.waitFor();
+    const sizes = await timer.evaluate(frame => {
+      const bounds = selector => frame.querySelector(selector).getBoundingClientRect();
+      const body = bounds('.bw-body');
+      const readout = bounds('.ah-timer-main');
+      const chart = bounds('.ah-timer-chart');
+      return {
+        centered: Math.abs((readout.top + chart.bottom - body.top - body.bottom) / 2) <= 2,
+        gap: chart.top - readout.bottom,
+        controlsFit: [...frame.querySelectorAll('button')].every(button => {
+          const rect = button.getBoundingClientRect();
+          return rect.left >= body.left - 1 && rect.right <= body.right + 1 && rect.bottom <= body.bottom + 1;
+        }),
+      };
+    });
+    const dimensions = width + 'x' + height;
+    assert(sizes.centered && sizes.controlsFit && sizes.gap >= 12 && sizes.gap <= 26, dimensions + ' · ' + JSON.stringify(sizes));
+    await timer.screenshot({ path: fileURLToPath(new URL('timer-centered-' + dimensions + '.png', output)) });
+    await timer.getByRole('button', { name: 'Add one minute' }).click();
+    assert(await timer.getByRole('img', { name: '17:00' }).isVisible());
+    await timer.getByRole('button', { name: 'Start timer' }).click();
+    assert.equal(await timer.getByRole('status').textContent(), 'Running');
+    await timer.getByRole('button', { name: 'Pause timer' }).click();
+    await timer.getByRole('button', { name: 'Reset timer' }).click();
+    assert(await timer.getByRole('img', { name: '16:00' }).isVisible());
+  }
   assert.equal(issues.size, 0, [...issues].join('\n'));
-  console.log('Landing passes layout, filters, keyboard, hydration, theme persistence, and reload variation.');
+  console.log('Landing passes layout, filters, keyboard, hydration, timer, theme persistence, and reload variation.');
 } finally {
   await browser.close();
 }
