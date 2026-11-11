@@ -1,7 +1,7 @@
 {
   "name": "@redheadesign/widgets",
   "private": true,
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Interactive React widgets and standalone HTML widgets for Telegram bots.",
   "repository": "github:redheadesign/widgets",
   "license": "UNLICENSED",

@@ -136,7 +136,7 @@ function Steps() {
   const [day, setDay] = useState(1);
   const progress = Math.round(STEPS[day] / 100);
   return <WidgetCard title="Steps" icon="footprints" aside={<span className="bw-muted hw-caption">Streak · 234<span className="hw-step-streak-long"> days</span><span className="hw-step-streak-short">d</span></span>}>
-    <div className="hw-between hw-steps">
+    <div className="hw-steps">
       <div className="hw-steps-readout"><DotNumber value={WHOLE_NUMBER.format(STEPS[day])} size={34} /><p className="bw-muted">{WEEKDAYS[day]} · {progress}% of goal</p><div className="hw-step-progress" style={{ '--hw-step-progress': `${Math.min(100, progress)}%` } as CSSProperties} aria-hidden="true"><span className="hw-step-progress-marker" /></div></div>
       <div className="hw-step-days" role="group" aria-label="Day of week">{WEEKDAYS.map((weekday, index) => (
         <button type="button" key={weekday} aria-label={weekday} aria-pressed={day === index} data-near-goal={STEPS[index] >= 9000} onClick={() => setDay(index)}><span className="hw-step-column" aria-hidden="true">{Array.from({ length: Math.round(STEPS[index] / 990) }, (_, point) => <i key={point} />)}</span><span>{weekday[0]}</span></button>
@@ -225,9 +225,9 @@ function LungCapacity() {
 
 const GLASS_PLURAL = new Intl.PluralRules('en-US');
 const WATER_LAYERS = [
-  { name: 'back', start: 6, period: 216, wave: 'c35 -5 71 -8 108 -2 s72 8 108 2', color: '#4f75b2', opacity: .24 },
-  { name: 'middle', start: 9, period: 228, wave: 'c35 6 78 6 114 0 s78 -6 114 0', color: '#5479b8', opacity: .17 },
-  { name: 'front', start: 12, period: 204, wave: 'c34 -4 68 -5 102 0 s68 4 102 0', color: undefined, opacity: .43 },
+  { name: 'back', start: 8, period: 216, wave: 'c36 -11 72 -11 108 0 s72 11 108 0', color: '#719be6', opacity: .27 },
+  { name: 'middle', start: 15, period: 192, wave: 'c32 9 64 9 96 0 s64 -9 96 0', color: '#537ac8', opacity: .18 },
+  { name: 'front', start: 22, period: 180, wave: 'c30 -8 60 -8 90 0 s60 8 90 0', color: undefined, opacity: .50 },
 ] as const;
 
 function WaterSurface({ glasses }: { glasses: number }) {
@@ -237,16 +237,17 @@ function WaterSurface({ glasses }: { glasses: number }) {
     <div className="hw-water-fill">
       <svg viewBox="0 0 176 192" preserveAspectRatio="none">
         <defs>
-          <linearGradient id={depthId} gradientUnits="userSpaceOnUse" x1="0" y1="7" x2="0" y2="116">
-            <stop stopColor="#4260a3" />
-            <stop offset=".45" stopColor="#33548c" />
+          <linearGradient id={depthId} gradientUnits="userSpaceOnUse" x1="0" y1="16" x2="0" y2="192">
+            <stop stopColor="#648bd6" />
+            <stop offset=".16" stopColor="#4569b0" />
+            <stop offset=".56" stopColor="#33548c" />
             <stop offset="1" stopColor="#384b9f" />
           </linearGradient>
         </defs>
         {WATER_LAYERS.map(layer => (
           <path key={layer.name} className={`hw-water-wave hw-water-wave--${layer.name}`}
             style={{ '--hw-wave-travel': `${-layer.period / 176 * 100}%` } as CSSProperties}
-            d={`M0 ${layer.start} ${layer.wave} ${layer.wave} V192 H0Z`}
+            d={`M${-layer.period} ${layer.start} ${`${layer.wave} `.repeat(4)}V198 H${-layer.period}Z`}
             fill={layer.color ?? `url(#${depthId})`} fillOpacity={layer.opacity} />
         ))}
       </svg>

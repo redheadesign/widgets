@@ -1,6 +1,6 @@
 # Виджеты · Redheadesign
 
-[Витрина](https://redheadesign.com/widgets/) · [Библиотека React](docs/library.md) · [Виджеты в Telegram](docs/telegram.md)
+[Витрина](https://redheadesign.com/widgets/) · [Скачать набор](https://github.com/redheadesign/widgets/releases/latest/download/widgets-kit.zip) · [Библиотека React](docs/library.md) · [Виджеты в Telegram](docs/telegram.md)
 
 30 интерактивных карточек для сайтов, bento-сеток и сообщений Telegram. На тёмной витрине от одной до пяти колонок с квадратным модулем до 176 px. На широком экране сетка остаётся по центру. Раскладка, порядок и палитра меняются при каждом открытии. В студии можно переключить формат, настроить цвет и движение, посмотреть вариант для Telegram и забрать HTML или iframe.
 

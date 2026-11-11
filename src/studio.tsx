@@ -109,7 +109,7 @@ function TopBar({ view, choose, showExport }: { view: View; choose: (v: View) =>
     <nav className="top-navigation" aria-label="Режим работы">
       <button type="button" aria-pressed={view === 'studio'} onClick={() => choose('studio')}><SlidersHorizontal size={15} />Студия</button>
       <button type="button" aria-pressed={view === 'gallery'} onClick={() => choose('gallery')}><Grid2X2 size={15} />Галерея</button>
-      <a href="?view=landing"><ArrowUpRight size={15} />Витрина</a>
+      <a href="?view=landing" target="_blank" rel="noreferrer"><ArrowUpRight size={15} />Витрина</a>
     </nav>
     <div className="top-actions">
       <button type="button" className="button button-primary" aria-label="Экспорт" onClick={showExport}><ArrowDownToLine size={15} /><span>Экспорт</span></button>

@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { ChartNoAxesCombined, Github, Grid2X2, HeartPulse, House, Layers3, Send, Star, Sun, type LucideIcon } from 'lucide-react';
+import { ArrowLeft, ChartNoAxesCombined, Github, Grid2X2, HeartPulse, House, Layers3, Send, Star, Sun, type LucideIcon } from 'lucide-react';
 import { BloomWidget, tones, widgetCatalog, type Category, type Tone } from './widgets';
 import { packBento, randomFrom, shuffle, type TileFit } from './bento-layout';
 import './landing.css';
@@ -90,10 +90,13 @@ export function BentoLanding() {
   return (
     <div className="bento-page">
       <header className="bento-header">
-        <a className="bento-brand" href={window.location.href} aria-label="Виджеты, новая раскладка">
-          <img src={`${import.meta.env.BASE_URL}redheadesign.svg`} alt="" width="30" height="30" />
-          <span>Виджеты</span>
-        </a>
+        <div className="bento-identity">
+          <a className="bento-link bento-back" href="https://redheadesign.com/#explorations" aria-label="Вернуться в портфолио" title="Вернуться в портфолио">
+            <ArrowLeft size={15} aria-hidden="true" />
+            <img src={`${import.meta.env.BASE_URL}redheadesign.svg`} alt="" width="22" height="22" />
+          </a>
+          <span className="bento-brand">Виджеты</span>
+        </div>
         <nav className="bento-nav" aria-label="Категории виджетов">
           {filters.map(({ id, label, icon: Icon }) => (
             <button type="button" key={id} aria-label={label} title={label} aria-pressed={filter === id} onClick={() => setFilter(id)}>

@@ -152,6 +152,7 @@ try {
   assert.equal(await filter('Все').getAttribute('aria-pressed'), 'true');
   assert.equal(await page.locator('.bento-page').evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(0, 0, 0)');
   assert.equal(await page.locator('.bento-header').getByRole('switch').count(), 0);
+  assert.equal(await page.getByRole('link', { name: 'Вернуться в портфолио' }).getAttribute('href'), 'https://redheadesign.com/#explorations');
   await page.getByRole('link', { name: /GitHub, звёзд: 17/ }).waitFor();
   assert.equal(await page.getByRole('link', { name: /GitHub/ }).getAttribute('href'), 'https://github.com/redheadesign/widgets');
   assert.equal(await page.getByRole('link', { name: /Telegram/ }).getAttribute('href'), 'https://t.me/redheadesign');

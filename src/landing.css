@@ -28,14 +28,14 @@ body:has(.bento-page) { margin: 0; }
   pointer-events: none;
 }
 .bento-header > * { pointer-events: auto; }
-.bento-brand, .bento-link { color: inherit; text-decoration: none; }
+.bento-link { color: inherit; text-decoration: none; }
+.bento-identity { display: inline-flex; align-items: center; justify-self: start; gap: 7px; }
 .bento-brand {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
-  padding: 6px 13px 6px 9px;
+  min-block-size: 40px;
+  padding-inline: 13px;
   border-radius: 999px;
-  justify-self: start;
   font-size: 17px;
   font-weight: 600;
   white-space: nowrap;
@@ -76,6 +76,7 @@ body:has(.bento-page) { margin: 0; }
 .bento-nav button[aria-pressed='true'] { color: var(--page); background: var(--ink); font-weight: 600; }
 .bento-actions { display: flex; justify-self: end; align-items: center; gap: 7px; }
 .bento-link { gap: 5px; min-inline-size: 40px; block-size: 40px; padding-inline: 10px; }
+.bento-back img { flex: none; }
 .bento-stars { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-variant-numeric: tabular-nums; }
 .bento-header :focus-visible { outline: 2px solid #f47c37; outline-offset: 3px; }
 .bento-nav button:active, .bento-link:active { transform: scale(.96); }
@@ -103,7 +104,7 @@ body:has(.bento-page) { margin: 0; }
   .bento-nav { grid-column: 1 / -1; grid-row: 2; justify-self: center; }
 }
 @media (max-width: 740px) {
-  .bento-brand { gap: 8px; font-size: 15px; }
+  .bento-brand { min-block-size: 38px; padding-inline: 10px; font-size: 15px; }
   .bento-nav { gap: 2px; padding: 5px; }
   .bento-nav button { min-inline-size: 44px; block-size: 44px; padding: 0; }
   .bento-nav button span { display: none; }
