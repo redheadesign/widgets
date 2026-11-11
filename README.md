@@ -1,78 +1,78 @@
-# Виджеты · Redheadesign
+# Widgets · Redheadesign
 
-[Открыть витрину](https://redheadesign.com/widgets/) · [Скачать релиз](https://github.com/redheadesign/widgets/releases/latest/download/widgets-kit.zip) · [Подключить React](docs/library.md) · [Отправить в Telegram](docs/telegram.md)
+[Live gallery](https://redheadesign.com/widgets/) · [Download the release](https://github.com/redheadesign/widgets/releases/latest/download/widgets-kit.zip) · [React guide](docs/library.md) · [Telegram guide](docs/telegram.md)
 
-30 интерактивных компонентов React для сайтов, дашбордов и bento-сеток. В студии можно менять размер, цвет и движение карточки, проверить вариант для Telegram и забрать HTML или iframe. Экспорт для Telegram работает как отдельный HTML-виджет внутри сообщения бота в личном чате.
+30 interactive React components for websites, dashboards, and bento grids. Use the studio to adjust a widget's size, color, and animation, preview the Telegram version, and copy the HTML or iframe embed code. The Telegram export runs as a standalone HTML widget inside a bot message in a private chat.
 
-На витрине 29 карточек, в том числе два эксперимента, Компас и Луна. Сетка подстраивается от одной до трёх колонок, а раскладка и палитра меняются при открытии. Можно фильтровать карточки по теме и пользоваться их управлением прямо на странице.
+The live gallery features 29 cards, including two experiments, Compass and Moon Phase. The grid adapts to one, two, or three columns, and its layout and colors change on each visit. Filter the cards by category and try their controls directly in the gallery.
 
-![Тёмная витрина виджетов в трёх колонках](docs/images/widgets-desktop.webp)
+![The dark widget gallery in a three-column layout](docs/images/widgets-desktop.webp)
 
 <details>
-<summary>Витрина на телефоне</summary>
+<summary>Gallery on mobile</summary>
 
-<img src="docs/images/widgets-phone.webp" width="390" alt="Виджеты в двух колонках на телефоне">
+<img src="docs/images/widgets-phone.webp" width="390" alt="The widget gallery in a two-column layout on mobile">
 
 </details>
 
-## Каталог в картинках
+## Widget gallery
 
-### Аналитика
+### Analytics
 
-![Выручка, активные пользователи и удержание](docs/images/widgets-analytics.webp)
-![Воронка конверсии, месячная цель и котировки BTC](docs/images/widgets-finance.webp)
+![Revenue, live users, and cohort retention](docs/images/widgets-analytics.webp)
+![Conversion funnel, monthly goal, and Bitcoin price](docs/images/widgets-finance.webp)
 
-### Здоровье и привычки
+### Health and habits
 
-![Шаги, пульс и кольца активности](docs/images/widgets-activity.webp)
-![Сон, средний уровень глюкозы и объём лёгких](docs/images/widgets-health.webp)
-![Стаканы воды, дыхание и таймер](docs/images/widgets-routines.webp)
+![Steps, heart rate, and activity rings](docs/images/widgets-activity.webp)
+![Sleep, average glucose, and lung capacity](docs/images/widgets-health.webp)
+![Hydration, guided breathing, and timer](docs/images/widgets-routines.webp)
 
-### Погода
+### Weather
 
-![Погода в городе, качество воздуха и УФ-индекс](docs/images/widgets-weather.webp)
-![Путь солнца, направление ветра и фаза Луны](docs/images/widgets-sky.webp)
+![Current weather, air quality, and UV index](docs/images/widgets-weather.webp)
+![Sun path, wind direction, and moon phase](docs/images/widgets-sky.webp)
 
-### Дом и навигация
+### Home and navigation
 
-![Термостат, свет и замок в формате 1 × 2](docs/images/widgets-home.webp)
-![Потребление энергии и компас](docs/images/widgets-energy.webp)
+![Thermostat, lights, and front door lock in a 1 × 2 layout](docs/images/widgets-home.webp)
+![Energy use and compass](docs/images/widgets-energy.webp)
 
-### На каждый день
+### Everyday
 
-![Музыкальный плеер, часы и список напоминаний](docs/images/widgets-everyday.webp)
+![Music player, clock, and reminders](docs/images/widgets-everyday.webp)
 
 <details>
-<summary>Ещё три компонента из студии</summary>
+<summary>Three more widgets from the studio</summary>
 
-![Календарь, источники трафика и почасовой прогноз](docs/images/widgets-studio-extra.webp)
+![Calendar, traffic sources, and hourly forecast](docs/images/widgets-studio-extra.webp)
 
 </details>
 
-## Запустить студию
+## Run the studio locally
 
-Нужен Node.js 22.18+ или 24 LTS.
+Requires Node.js 22.18+ or 24 LTS.
 
 ```sh
 npm ci
 npm run dev -- --host 127.0.0.1
 ```
 
-- [Студия](http://127.0.0.1:5173/) — каталог, предпросмотр и экспорт.
-- [Витрина](http://127.0.0.1:5173/widgets/) — интерактивная сетка с фильтрами по категориям.
-- [Отдельный виджет](http://127.0.0.1:5173/?embed=hydration) — прозрачный фон для iframe. Контейнер iframe задаёт его ширину и высоту.
+- [Studio](http://127.0.0.1:5173/) for browsing, previewing, and exporting widgets.
+- [Gallery](http://127.0.0.1:5173/widgets/) with an interactive grid and category filters.
+- [Single-widget embed](http://127.0.0.1:5173/?embed=hydration) with a transparent background. The iframe container sets its width and height.
 
-## Подключить к React
+## Use with React
 
-Для React 19 используйте пакет из последнего релиза:
+For React 19, install the package from the latest release.
 
 ```sh
 npm install https://github.com/redheadesign/widgets/releases/download/v1.0.3/redheadesign-widgets-1.0.3.tgz
 ```
 
-Чтобы взять текущую версию из `main`, клонируйте репозиторий и запустите `npm ci` и `npm pack`. Установите полученный `.tgz` в приложении.
+To build from `main`, clone the repository and run `npm ci` and `npm pack`. Install the resulting `.tgz` file in your app.
 
-Подключите стили один раз в точке входа приложения:
+Import the stylesheet once in your app's entry point.
 
 ```tsx
 import { Widget } from '@redheadesign/widgets';
@@ -83,13 +83,13 @@ export function Dashboard() {
 }
 ```
 
-`size="small"`, `"wide"` или `"large"` задаёт номинальный формат 1 × 1, 2 × 1 или 2 × 2. Для адаптивной сетки используйте `fill` и задайте размер родителю. Рекомендуемый минимум — 160 × 160 px. [Параметры, каталог и примеры](docs/library.md).
+`size="small"`, `"wide"`, and `"large"` correspond to 1 × 1, 2 × 1, and 2 × 2 layouts. For a responsive grid, use `fill` and set the size of the parent container. The recommended minimum is 160 × 160 px. [Props, widget IDs, and examples](docs/library.md)
 
-## Отправить через бота Telegram
+## Send a widget with a Telegram bot
 
-Скачайте HTML из студии или сгенерируйте его через `buildTelegramHtml('hydration')` из `@redheadesign/widgets/telegram`. Пользователь должен открыть личный чат с ботом и нажать «Старт». Затем бот передаёт HTML и `chat_id` методу `sendWidget`. [Пример отправки и ограничения HTML](docs/telegram.md).
+Download the HTML from the studio or generate it with `buildTelegramHtml('hydration')` from `@redheadesign/widgets/telegram`. The user opens a private chat with the bot and taps **Start**. The bot can then pass the HTML and `chat_id` to `sendWidget`. [Bot API example and HTML limits](docs/telegram.md)
 
-## Собрать и проверить
+## Build and test
 
 ```sh
 npm run build
@@ -97,8 +97,8 @@ npm run check:library
 npm run check:telegram -- --exact --write
 ```
 
-Сайт собирается в `dist/`. Отдельные HTML для `sendWidget` сохраняются в `telegram-dist/`. Для `--exact` нужен Python 3. [Ограничения Telegram и пример отправки](docs/telegram.md).
+The website builds into `dist/`. Standalone HTML files for `sendWidget` are written to `telegram-dist/`. The `--exact` flag requires Python 3. [Telegram export guide](docs/telegram.md)
 
-При запущенной студии `npm run qa:landing` проверяет геометрию, фильтры и рандомизацию витрины в Edge. `npm run qa:web` запускает основные действия всех веб-карточек в трёх форматах.
+With the studio running, `npm run qa:landing` checks the gallery layout, filters, and randomization in Edge. `npm run qa:web` tests the primary widget interactions at three sizes.
 
-Карточки здоровья, погоды, аналитики и умного дома используют демонстрационные данные. Плеер воспроизводит пять записей CC0 на вебе. [Источники аудио, обложек и шрифта](ATTRIBUTION.md) · [Снимок Луны NASA SVS](src/widgets/astronomy-assets/ATTRIBUTION.md)
+Health, weather, analytics, and smart home widgets use sample data. The web music player includes five CC0 recordings. [Audio, cover art, and font credits](ATTRIBUTION.md) · [NASA SVS Moon image](src/widgets/astronomy-assets/ATTRIBUTION.md)

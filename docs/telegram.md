@@ -1,30 +1,30 @@
-# Виджеты в сообщениях Telegram
+# Widgets in Telegram messages
 
-В личный чат с ботом можно отправить самостоятельный HTML-файл виджета через `sendWidget`. Этот способ появился в Bot API 10.4 9 ноября 2026 года. В рабочей среде виджеты сейчас доступны в личных чатах с ботом. Группы, пересылка и inline-режим доступны на тестовом сервере. [Журнал изменений](https://core.telegram.org/bots/api-changelog#november-9-2026) · [Доступность](https://core.telegram.org/bots/widgets#availability)
+Bots can send a self-contained HTML widget to a private chat with `sendWidget`, introduced in Bot API 10.4 on November 9, 2026. The production environment supports private chats with the bot. Group chats, forwarding, and inline mode are available on the test server. [Bot API changelog](https://core.telegram.org/bots/api-changelog#november-9-2026) · [Widget availability](https://core.telegram.org/bots/widgets#availability)
 
-## Скачать и проверить
+## Download and validate
 
-В студии выберите виджет и откройте режим Telegram. Настройте цвет акцента, оттенок карточки, свечение и скорость, затем скачайте HTML. Для экспорта всех 30 файлов с исходными настройками запустите команду из папки проекта. Для `--exact` нужен Python 3 в `PATH`.
+Choose a widget in the studio and switch to Telegram mode. Adjust the accent color, card tint, glow, and animation speed, then download the HTML. To export all 30 widgets with their default settings, run this command from the project directory. The `--exact` flag requires Python 3 on your `PATH`.
 
 ```powershell
 npm run check:telegram -- --exact --write
 ```
 
-Команда проверяет размер, синтаксис JavaScript и ряд ограничений профиля для исходной и двух пользовательских настроек каждой карточки. Флаг `--write` сохраняет исходные варианты в `telegram-dist/`. С флагом `--exact` команда использует zlib уровня 9 в Python, как на сервере Telegram. Допустимый объём составляет 32 768 байт HTML в UTF-8 и 4096 байт после сжатия. Отдельный скачанный файл можно проверить той же библиотекой. [Проверка размера](https://core.telegram.org/bots/widgets#counting-the-size)
+The command checks size, JavaScript syntax, and several Telegram widget constraints for the default settings and two custom configurations of each widget. The `--write` flag saves the default exports to `telegram-dist/`. The `--exact` flag uses Python's zlib at level 9, matching the compression level used by Telegram. The limits are 32,768 bytes of UTF-8 HTML and 4,096 bytes after compression. You can use the same library to check an individual download. [How Telegram counts widget size](https://core.telegram.org/bots/widgets#counting-the-size)
 
 ```powershell
 python -c "import pathlib,zlib; print(len(zlib.compress(pathlib.Path('telegram-dist/timer.html').read_bytes(),9)))"
 ```
 
-Проверка в Chromium открывает все 30 карточек на ширине 200, 320, 390, 430 и 600 px. Она проверяет касания на 200 px, клики на 320 px, компоновку после смены состояния и безопасную область под время сообщения. Для запуска нужны `playwright-core` и установленный Microsoft Edge. Чтобы проверить одну карточку, передайте её идентификатор, например `hydration`.
+The Chromium checks open all 30 widgets at widths of 200, 320, 390, 430, and 600 px. They cover touch input at 200 px, clicks at 320 px, layout after state changes, and clearance for the message timestamp. They require `playwright-core` and Microsoft Edge. To check a single widget, pass its ID, such as `hydration`.
 
 ```powershell
 node --experimental-strip-types qa/telegram-verify.mjs
 ```
 
-## Отправить в личный чат
+## Send to a private chat
 
-Пользователь должен открыть чат с ботом и нажать «Старт». Возьмите ID чата из `message.chat.id` полученного ботом обновления. Установите `TELEGRAM_BOT_TOKEN` и `TELEGRAM_CHAT_ID` в окружении, затем выполните пример с Node.js из папки проекта. Подпись видна в уведомлениях и освобождает нижний угол виджета от времени сообщения. [Метод sendWidget](https://core.telegram.org/bots/api#sendwidget) · [Время сообщения](https://core.telegram.org/bots/widgets#the-time-in-the-corner)
+The user opens a private chat with the bot and taps **Start**. Get the chat ID from `message.chat.id` in the update the bot receives. Set the `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` environment variables, then run the Node.js example from the project directory. The caption appears in notifications and keeps the timestamp clear of the widget's lower corner. [sendWidget](https://core.telegram.org/bots/api#sendwidget) · [Message timestamp](https://core.telegram.org/bots/widgets#the-time-in-the-corner)
 
 ```powershell
 @'
@@ -40,7 +40,7 @@ try {
   response = await fetch(`https://api.telegram.org/bot${token}/sendWidget`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, html, caption: 'Таймер на 16 минут. Можно изменить длительность, поставить на паузу и сбросить.' }),
+    body: JSON.stringify({ chat_id: chatId, html, caption: 'A 16-minute timer. Adjust the duration, pause, or reset it.' }),
   })
 } catch {
   throw new Error('Failed to connect to the Telegram Bot API')
@@ -51,16 +51,16 @@ console.log('Message ID:', result.result.message_id)
 '@ | node --input-type=module -
 ```
 
-## Как устроен экспорт
+## How the export works
 
-`buildTelegramHtml(id, { accent, tint, glow, speed, reducedMotion })` генерирует один документ без внешних ресурсов. Акцент и оттенок принимают `#RRGGBB`, свечение принимает значения от 0 до 2, скорость от 0,25 до 3. Заголовки и обычные числа используют системный шрифт, а точечные цифры нарисованы SVG. В Hydration уровень воды соответствует количеству стаканов. При уменьшенном движении волны остаются статичными, а уровень меняется сразу. Учитываются настройки студии и `prefers-reduced-motion`. [Профиль виджета](https://core.telegram.org/bots/widgets#what-widgets-support)
+`buildTelegramHtml(id, { accent, tint, glow, speed, reducedMotion })` generates one self-contained document. Accent and tint accept `#RRGGBB` colors, glow ranges from 0 to 2, and speed ranges from 0.25 to 3. Titles and standard numbers use the system font, and dot-matrix digits use SVG. In Hydration, the water level reflects the glass count. With reduced motion, the waves stay still and the level updates immediately. The export respects the studio settings and `prefers-reduced-motion`. [Supported widget features](https://core.telegram.org/bots/widgets#what-widgets-support)
 
-Превью студии подстраивает высоту рамки под содержимое. При отправке опустите `width` и `height` или передайте `0`, чтобы Telegram измерил карточку по содержимому на всю ширину пузыря. Нижний отступ виджета учитывает безопасную область для времени сообщения. [Размеры и время сообщения](https://core.telegram.org/bots/widgets#sizes)
+The studio preview adjusts the frame height to the content. When sending a widget, omit `width` and `height` or pass `0` to let Telegram size the card to its content across the full width of the message bubble. The bottom padding leaves room for the message timestamp. [Dimensions and timestamp](https://core.telegram.org/bots/widgets#sizes)
 
-Графики сна, шагов, прогноза, выручки, расхода энергии и котировок реагируют на касание и горизонтальное перетаскивание. Когорты и этапы воронки выбираются касанием ячеек. Вертикальный жест прокручивает чат. Замок реагирует на удержание и сбрасывает удержание, если жест отменён. [Жесты Telegram](https://core.telegram.org/bots/widgets#gestures)
+The sleep, steps, forecast, revenue, energy, and price charts respond to taps and horizontal drags. Tap a cell to select a cohort or a funnel stage. Vertical gestures scroll the chat. The door lock responds to a long press and clears its progress if the gesture is canceled. [Telegram gestures](https://core.telegram.org/bots/widgets#gestures)
 
-Часы, календарь и таймер работают по времени устройства. Календарь содержит пример расписания для текущей недели. Погода, котировки, аналитика и показатели здоровья используют данные примера. В музыкальной карточке работают таймлайн и переключение треков. Звук доступен в веб-версии, поскольку профиль Telegram не поддерживает воспроизведение аудио. Замок и домашние приборы имитируют локальные состояния. [Профиль виджета](https://core.telegram.org/bots/widgets#what-widgets-support)
+The clock, calendar, and timer use the device clock. The calendar shows a sample agenda for the current week. Weather, prices, analytics, and health metrics use sample data. The music widget supports seeking and switching tracks, with audio playback available in the web version. The door lock and smart home controls simulate device states locally. [Supported widget features](https://core.telegram.org/bots/widgets#what-widgets-support)
 
-Для данных от бота можно передать `chat_data` или `public_data` и обновлять их через Bot API. Действия с ответом бота потребуют `allow_queries: true`, `TelegramWidget.request()` и обработчика `widget_query`. После отправки код HTML фиксируется в сообщении. Для изменения разметки или стилей отправьте новую версию. [Состояние и запросы](https://core.telegram.org/bots/widgets#sending-widgets)
+Bots can pass data through `chat_data` or `public_data` and update it through the Bot API. Actions that need a response from the bot require `allow_queries: true`, `TelegramWidget.request()`, and a `widget_query` handler. The HTML is fixed once the message is sent. Send a new version to change its markup or styles. [Widget state and requests](https://core.telegram.org/bots/widgets#sending-widgets)
 
-Клиент Telegram использует собственный рендерер и применяет ограничения профиля. Для проверки в чате отправьте итоговый HTML тестовым ботом и сравните входящий пузырь в светлой и тёмной теме. В подпись сообщения включите основные данные и действия карточки, поскольку клиент пока не обрабатывает её ARIA-семантику. Для размещения полного React-виджета внутри Telegram разместите сборку по HTTPS и откройте её как Mini App. [Проверка в Telegram](https://core.telegram.org/bots/widgets#testing) · [Правила интерфейса](https://core.telegram.org/bots/widgets#design-guidelines) · [Mini Apps](https://core.telegram.org/bots/webapps)
+Telegram renders widgets with its own renderer and enforces its widget constraints. To test the final HTML in a chat, send it from a test bot and check the incoming message in both light and dark themes. Include the widget's main information and actions in the caption so users can access them even when the client does not interpret the widget's ARIA semantics. To run the full React widget in Telegram, host the build over HTTPS and open it as a Mini App. [Testing in Telegram](https://core.telegram.org/bots/widgets#testing) · [Design guidelines](https://core.telegram.org/bots/widgets#design-guidelines) · [Mini Apps](https://core.telegram.org/bots/webapps)
